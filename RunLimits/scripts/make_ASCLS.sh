@@ -46,7 +46,7 @@ function run {
     MYWHAT=$1${POST}; shift
     NAM=$(echo $1 | sed -e s/comb_// -e s/.root//   | tr '[a-z]' '[A-Z]')
     BSP=${1/.root};
-    OPTS="$OPTIONS"
+    OPTS="$OPTIONS --X-rtd TMCSO_AdaptivePseudoAsimov"
     if [[ "$TASK" == "observed" ]]; then MYWHAT="${MYWHAT}.O"; fi;
     if [[ "$TASK" == "expected" ]]; then MYWHAT="${MYWHAT}.E"; fi;
     if [[ "$TASK" == "singlePoint" ]]; then MYWHAT="SM${MYWHAT}"; fi;
