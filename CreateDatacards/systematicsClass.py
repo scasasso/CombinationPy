@@ -13,7 +13,7 @@ from array import array
 
 class systematicsClass:
 
-    def __init__(self,theMass,theForXSxBR,theisFSR,theInputs):
+    def __init__(self,theMass,theForXSxBR,theisFSR,theInputs,isHMP):
 
         self.ID_4mu = 1
         self.ID_4e = 2
@@ -25,6 +25,7 @@ class systematicsClass:
         self.isForXSxBR = theForXSxBR
         self.isFSR = theisFSR
         self.model = theInputs['model']
+        self.isHMP = isHMP
 
 
         self.muSelError = 0.0
@@ -732,8 +733,11 @@ class systematicsClass:
             if theInputs['useCMS_zz4l_n']:
                 theFile.write("CMS_zz4l_n_sig_{0}_{1:.0f} param 0.0 {2} \n".format(self.channel,self.sqrts,N_CB_errPerCent))
             if theInputs['useCMS_zz4l_gamma']:
-                theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
-                #theFile.write("CMS_zz4l_gamma_sig_{0}_{1:.0f} param 0.0 {2} \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
+                if not self.isHMP: theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
+                else:
+                    if self.mH<751: theFile.write("interf_ggH_BSM param 0 0.5 [-1,1] \n")
+                    elif self.mH<851: theFile.write("interf_ggH_BSM param 0 0.6 [-1,1] \n")
+                    else: theFile.write("interf_ggH_BSM param 0 0.65 [-1,1] \n")
             
         if( self.channel == self.ID_4e):
 
@@ -745,8 +749,12 @@ class systematicsClass:
             if theInputs['useCMS_zz4l_n']:
                 theFile.write("CMS_zz4l_n_sig_{0}_{1:.0f} param 0.0 {2} \n".format(self.channel,self.sqrts,N_CB_errPerCent))
             if theInputs['useCMS_zz4l_gamma']:
-                theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
-                #theFile.write("CMS_zz4l_gamma_sig_{0}_{1:.0f} param 0.0 {2} \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
+                if not self.isHMP: theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
+                else:
+                    if self.mH<751: theFile.write("interf_ggH_BSM param 0 0.5 [-1,1] \n")
+                    elif self.mH<851: theFile.write("interf_ggH_BSM param 0 0.6 [-1,1] \n")
+                    else: theFile.write("interf_ggH_BSM param 0 0.65 [-1,1] \n")
+
             
         if( self.channel == self.ID_2e2mu):
 
@@ -761,6 +769,8 @@ class systematicsClass:
             if theInputs['useCMS_zz4l_n']:
                 theFile.write("CMS_zz4l_n_sig_{0}_{1:.0f} param 0.0 {2} \n".format(self.channel,self.sqrts,N_CB_errPerCent))
             if theInputs['useCMS_zz4l_gamma']:
-                theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
-                #theFile.write("CMS_zz4l_gamma_sig_{0}_{1:.0f} param 0.0 {2} \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
-
+                if not self.isHMP: theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
+                else:
+                    if self.mH<751: theFile.write("interf_ggH_BSM param 0 0.5 [-1,1] \n")
+                    elif self.mH<851: theFile.write("interf_ggH_BSM param 0 0.6 [-1,1] \n")
+                    else: theFile.write("interf_ggH_BSM param 0 0.65 [-1,1] \n")

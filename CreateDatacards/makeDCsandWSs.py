@@ -27,6 +27,8 @@ def parseOptions():
     parser.add_option('-e', '--massError',   dest='massError',       type='int',    default=0,     help='massError (default:0)')
     parser.add_option('-u', '--mekd',   dest='mekd',       type='int',    default=0,     help='mekd double gaussian inputs (default:0)')
     parser.add_option('-j', '--jet', dest='useJET', type='int', default=0, help='useJET (default:0)')
+    parser.add_option('-c', '--csquared',   dest='csquared',       type='float',    default=1.0,     help='C^2 value (default:1.0)')
+    parser.add_option('-r', '--brnew',   dest='brnew',       type='float',    default=0.0,     help='BR_new value (default:0)')
 
     
     # store options and arguments as global variables
@@ -78,17 +80,27 @@ def processCmd(cmd):
 def creationLoop(directory):
     global opt, args
     
-#    startMass=[ 380.0, 400.0, 600.0 ]
-#    stepSizes=[ 10.0,   20.0, 50.0 ]
-#    endVal=[ 1, 10, 9 ]
+#     startMass=[ 250.0, 700.0 ]
+#     stepSizes=[ 0.5, 0.5 ]
+#     endVal=[ 1, 1 ]
+
+    startMass=[ 400.0 ]
+    stepSizes=[  100.0 ]
+    endVal   =[   7  ]
+
+## Only very high masses
+#     startMass=[ 400.0 ]
+#     stepSizes=[  50.0 ]
+#     endVal   =[   13  ]
+
 
 #    startMass=[ 200.0, 290.0, 350.0, 400.0, 600.0 ]
 #    stepSizes=[  2.0,   5.0,   10.0,  20.0,  50.0 ]
 #    endVal   =[   45,    12,    4,     10,    9   ]
 
-    startMass=[ 124.5]
-    stepSizes=[ 0.1]
-    endVal=[     20]
+#     startMass=[ 124.5]
+#     stepSizes=[ 0.1]
+#     endVal=[     20]
 
 #    startMass=  [ 110.0, 124.5, 126.5, 130.0]
 #    stepSizes=  [  0.5,   0.1,   0.5,   1.0]
@@ -140,7 +152,8 @@ def creationLoop(directory):
         myReader2e2mu_1.readInputs()
         theInputs2e2mu_1 = myReader2e2mu_1.getInputs() 
 
-    
+
+
     a=0
     while (a < len(startMass) ):
 	
@@ -156,52 +169,52 @@ def creationLoop(directory):
             if (opt.useJET == 0):
                 makeDirectory(directory+'/HCG/'+mhs)
                 makeDirectory(directory+'/HCG_XSxBR/'+mhs)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory,theInputs4e,opt.templateDir, opt.massError, opt.mekd)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory,theInputs4mu,opt.templateDir,opt.massError, opt.mekd)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory,theInputs2e2mu,opt.templateDir,opt.massError, opt.mekd)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory,theInputs4e,opt.templateDir, opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory,theInputs4mu,opt.templateDir,opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory,theInputs2e2mu,opt.templateDir,opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
             if (opt.useJET == 1):
                 makeDirectory(directory+'_tagged/HCG/'+mhs)
                 makeDirectory(directory+'_tagged/HCG_XSxBR/'+mhs)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,1)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,1,opt.csquared,opt.brnew)
                 
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,1)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,1,opt.csquared,opt.brnew)
 
             if (opt.useJET == 2):
                 makeDirectory(directory+'_tagged/HCG/'+mhs)
                 makeDirectory(directory+'_tagged/HCG_XSxBR/'+mhs)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,0)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
                 
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,1)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,1,opt.csquared,opt.brnew)
 
             if (opt.useJET == 3):
                 makeDirectory(directory+'_tagged/HCG/'+mhs)
                 makeDirectory(directory+'_tagged/HCG_XSxBR/'+mhs)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,1)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,1)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,1,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,1,opt.csquared,opt.brnew)
                 
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,0)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,0,opt.csquared,opt.brnew)
 
             if (opt.useJET == 4):
                 makeDirectory(directory+'_tagged/HCG/'+mhs)
                 makeDirectory(directory+'_tagged/HCG_XSxBR/'+mhs)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,0)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_0,opt.templateDir, opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_0,opt.templateDir,opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_0,opt.templateDir,opt.massError, opt.mekd,0,0,opt.csquared,opt.brnew)
                 
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,0)
-                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,0)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4e_1,opt.templateDir, opt.massError, opt.mekd,1,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs4mu_1,opt.templateDir,opt.massError, opt.mekd,1,0,opt.csquared,opt.brnew)
+                myClass.makeCardsWorkspaces(mh,opt.is2D,directory+'_tagged',theInputs2e2mu_1,opt.templateDir,opt.massError, opt.mekd,1,0,opt.csquared,opt.brnew)
                 
             c += 1
             

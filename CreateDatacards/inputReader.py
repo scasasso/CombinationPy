@@ -253,7 +253,15 @@ class inputReader:
 	self.relerr_zx_ld_frac = -999.
 	self.relerr_zx_gs_mean = -999.
 	self.relerr_zx_gs_sigma = -999.
-	# --- end relative error 
+	# --- end relative error
+
+        # --- RooSigPlusInt parameters
+        self.h_r_theoParGGH = -999.
+        self.h_Gamma_theoParGGH = -999.
+        self.h_Alpha_theoParGGH = -999.
+        self.h_Beta_theoParGGH = -999.
+        self.h_Delta_theoParGGH = -999.
+        # --- end RooSigPlusInt parameters
 
     def goodEntry(self,variable):
         if variable == -999.9:
@@ -654,7 +662,20 @@ class inputReader:
             if f[0].lower().startswith("usecms_zz4l_fisher_sys"):
                 self.useCMS_zz4l_Fisher_sys = self.parseBoolString(f[1])
             if f[0].lower().startswith("usecms_zz4l_pt_sys"):
-                self.useCMS_zz4l_Pt_sys = self.parseBoolString(f[1])             
+                self.useCMS_zz4l_Pt_sys = self.parseBoolString(f[1])
+                
+        fInHistoTheoParsGGH = TFile("ParamsGrid_SigInt_"+str(int(self.sqrts))+"TeV.root")
+        self.h_r_theoParGGH = fInHistoTheoParsGGH.Get("h_r")
+        self.h_r_theoParGGH.SetDirectory(0)
+        self.h_Gamma_theoParGGH = fInHistoTheoParsGGH.Get("h_Gamma")
+        self.h_Gamma_theoParGGH.SetDirectory(0)
+        self.h_Alpha_theoParGGH = fInHistoTheoParsGGH.Get("h_Alpha")
+        self.h_Alpha_theoParGGH.SetDirectory(0)
+        self.h_Beta_theoParGGH = fInHistoTheoParsGGH.Get("h_Beta")
+        self.h_Beta_theoParGGH.SetDirectory(0)
+        self.h_Delta_theoParGGH = fInHistoTheoParsGGH.Get("h_Delta")
+        self.h_Delta_theoParGGH.SetDirectory(0)
+        fInHistoTheoParsGGH.Close()
 
     def getInputs(self):
 
@@ -704,7 +725,8 @@ class inputReader:
             print "{0} is not set. Using {1} for {0}.".format("sigma_CB_shape_HM","sigma_CB_shape")
             self.sigma_CB_shape_HM = self.sigma_CB_shape
                         
-        if not self.goodEntry(self.gamma_BW_shape_HM): raise RuntimeError, "{0} is not set.  Check inputs!".format("gamma_BW_shape_HM")
+        # if not self.goodEntry(self.gamma_BW_shape_HM): raise RuntimeError, "{0} is not set.  Check inputs!".format("gamma_BW_shape_HM") ## FIXME: need to get rid of this
+        self.gamma_BW_shape_HM = "(TMath::Max((-151.23)+(0.566127*@0)+(-0.000313658*@0*@0),20))" ##FIXME: this is dummy placeholder!
 
         if not self.goodEntry(self.sigeff_a1): raise RuntimeError, "{0} is not set.  Check inputs!".format("sigEff_a1")
         if not self.goodEntry(self.sigeff_a2): raise RuntimeError, "{0} is not set.  Check inputs!".format("sigEff_a2")
@@ -1076,5 +1098,11 @@ class inputReader:
 	dict['relerr_zx_ld_sigma'] = self.relerr_zx_ld_sigma
 	dict['relerr_zx_gs_mean'] = self.relerr_zx_gs_mean
 	dict['relerr_zx_gs_sigma'] = self.relerr_zx_gs_sigma
+
+        dict['h_r_theoParGGH'] = self.h_r_theoParGGH
+        dict['h_Gamma_theoParGGH'] = self.h_Gamma_theoParGGH
+        dict['h_Alpha_theoParGGH'] = self.h_Alpha_theoParGGH
+        dict['h_Beta_theoParGGH'] = self.h_Beta_theoParGGH
+        dict['h_Delta_theoParGGH'] = self.h_Delta_theoParGGH
 
         return dict
