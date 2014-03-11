@@ -388,12 +388,13 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
     RooRealVar k("k","k",0.25);
     RooRealVar delta("delta","delta",deltaVal);
     RooRealVar CSquared("CSquared","C'^{2}",cprimeVal);
+    RooRealVar BRnew("BRnew","BR_{new}",0.);
     RooRealVar alpha("alpha","#alpha",alphaVal);
     RooRealVar beta("beta","#beta",betaVal);
     RooRealVar r("r","r",rVal,rVal-0.2*rVal,rVal+0.2*rVal);
     r.setConstant(kTRUE);
 
-    RooSigPlusInt SignalTheor("model","model",ZZMass,MHStar,delta,Gamma_TOT,k,CSquared,alpha,beta,r);
+    RooSigPlusInt SignalTheor("model","model",ZZMass,MHStar,delta,Gamma_TOT,k,CSquared,BRnew,alpha,beta,r);
 
     //Experimental resolution
     RooRealVar meanCB("meanCB","meanCB",0.,-0.8,0.8);
