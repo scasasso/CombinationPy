@@ -15,7 +15,7 @@ from inputReader import *
 ## ------------------------------------
 
 HMP_flag = True
-newXSBR = False
+newXSBR = True
 
 class datacardClass:
 

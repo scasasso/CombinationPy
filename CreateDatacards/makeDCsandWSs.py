@@ -84,15 +84,19 @@ def creationLoop(directory):
 #     stepSizes=[ 0.5, 0.5 ]
 #     endVal=[ 1, 1 ]
 
-    startMass=[ 400.0 ]
+    startMass=[ 900.0 ]
     stepSizes=[  100.0 ]
-    endVal   =[   7  ]
+    endVal   =[   1  ]
 
-## Only very high masses
+   # # Only very high masses
 #     startMass=[ 400.0 ]
 #     stepSizes=[  50.0 ]
 #     endVal   =[   13  ]
 
+#     # High mass paper
+#     startMass=[ 145.0, 160,    300.0, 400.0, 600.0 ]
+#     stepSizes=[  1.0,   5.0,   10.0,  20.0,  100.0 ]
+#     endVal   =[   15,    28,    10,     10,    5   ]
 
 #    startMass=[ 200.0, 290.0, 350.0, 400.0, 600.0 ]
 #    stepSizes=[  2.0,   5.0,   10.0,  20.0,  50.0 ]
