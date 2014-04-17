@@ -592,7 +592,7 @@ class datacardClass:
         if(self.bVBF):
 
             VD_name = "CMS_zz4l_Fisher"
-            VD = ROOT.RooRealVar(VD_name,VD_name,0,2.)
+            VD = ROOT.RooRealVar(VD_name,VD_name,0,1.)
             VD.setBins(50)
             pt_name = "CMS_zz4l_Pt"
             pt = ROOT.RooRealVar(pt_name,pt_name,0,200.)
