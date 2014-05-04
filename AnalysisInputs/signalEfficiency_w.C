@@ -36,7 +36,8 @@
 #include "../CreateDatacards/include/tdrstyle.cc"
 
 bool verbose = false;
-bool useNewGGHPowheg = true;
+bool useNewGGHPowheg = false;
+bool useGGHMINLO = true;
 
 using namespace std;
 using namespace ROOT::Math;
@@ -185,21 +186,21 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
 
   // Print table with yields
   (*txtYields) << endl << endl 
-	       << left << setw(7) << "*** Summary: " << sprocess << " process, sqrts = " << fixed << setprecision(0) <<sqrts << " TeV, channel = " << schannel << " ***" << endl << endl;
+         << left << setw(7) << "*** Summary: " << sprocess << " process, sqrts = " << fixed << setprecision(0) <<sqrts << " TeV, channel = " << schannel << " ***" << endl << endl;
   (*txtYields) << left << setw(7) << "mH" << setw(13) << "XS*BR" << setw(13) 
-	       << "Eff unt" << setw(13) << "Yield unt" << setw(13) << "Eff tag" 
-	       << setw(13) << "Yield tag" << setw(13) << "Eff TOT" << setw(13) << "Yield TOT" 
-	       << setw(13) << "Eff unt" << setw(13) << "Yield unt" << setw(13) << "Eff tag" 
-	       << setw(13) << "Yield tag" << setw(13) << "Eff TOT" << setw(13) << "Yield TOT" 
-	       << setw(13) << "n. raw" << setw(13) << "n. W pwg" << setw(13) << "n. W PU" 
-	       << setw(13) << "n. W eff" << setw(13) 
-	       << endl << left << setw(7) << " " << setw(13) << " " << setw(13)
-	       << "(in MW)" << setw(13) << "(in MW)" << setw(13) << "(in MW)" 
-	       << setw(13) << "(in MW)" << setw(13) << "(in MW)" << setw(13) << "(in MW)" 
-	       << setw(13) << "(full)" << setw(13) << "(full)" << setw(13) << "(full)" 
-	       << setw(13) << "(full)" << setw(13) << "(full)" << setw(13) << "(full)" 
-	       << setw(13) << "(full U+T)" << setw(13) << "(full U+T)" << setw(13) << "(full U+T)" << setw(13) << "(full U+T)" 
-	       << endl << endl;
+         << "Eff unt" << setw(13) << "Yield unt" << setw(13) << "Eff tag" 
+         << setw(13) << "Yield tag" << setw(13) << "Eff TOT" << setw(13) << "Yield TOT" 
+         << setw(13) << "Eff unt" << setw(13) << "Yield unt" << setw(13) << "Eff tag" 
+         << setw(13) << "Yield tag" << setw(13) << "Eff TOT" << setw(13) << "Yield TOT" 
+         << setw(13) << "n. raw" << setw(13) << "n. W pwg" << setw(13) << "n. W PU" 
+         << setw(13) << "n. W eff" << setw(13) 
+         << endl << left << setw(7) << " " << setw(13) << " " << setw(13)
+         << "(in MW)" << setw(13) << "(in MW)" << setw(13) << "(in MW)" 
+         << setw(13) << "(in MW)" << setw(13) << "(in MW)" << setw(13) << "(in MW)" 
+         << setw(13) << "(full)" << setw(13) << "(full)" << setw(13) << "(full)" 
+         << setw(13) << "(full)" << setw(13) << "(full)" << setw(13) << "(full)" 
+         << setw(13) << "(full U+T)" << setw(13) << "(full U+T)" << setw(13) << "(full U+T)" << setw(13) << "(full U+T)" 
+         << endl << endl;
 
   cout << "process = " << sprocess << " schannel = " << schannel << "  sqrts = " << sqrts << " JES = " << JES <<endl;
 
@@ -219,8 +220,8 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
     ofrat.open(ratiooutfile,ios_base::out | ios_base::app);
   }
 
-  ftot = new TFile("sigFigs" + ssqrts +"/eff_" + sprocess + "_" + schannel + sjes + (useNewGGHPowheg ? ".root" : "_oldPwg.root"),"RECREATE");
-  fratio = new TFile("sigFigs" + ssqrts +"/eff_" + sprocess + "_" + schannel + sjes + (useNewGGHPowheg ? "_ratio.root" : "_ratio_oldPwg.root"),"RECREATE");
+  ftot = new TFile("sigFigs" + ssqrts +"/eff_" + sprocess + "_" + schannel + sjes + ((useNewGGHPowheg || useGGHMINLO) ? ".root" : "_oldPwg.root"),"RECREATE");
+  fratio = new TFile("sigFigs" + ssqrts +"/eff_" + sprocess + "_" + schannel + sjes + ((useNewGGHPowheg || useGGHMINLO) ? "_ratio.root" : "_ratio_oldPwg.root"),"RECREATE");
 
   gSystem->AddIncludePath("-I$ROOFITSYS/include");
   setTDRStyle(false);
@@ -235,27 +236,39 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
   if (process==ggH){
     if (useNewGGHPowheg) {
       if (sqrts==7) {
-	nPoints = nPoints7TeV_p15;
-	masses  = masses7TeV_p15;
-	mHVal   = mHVal7TeV_p15;
-	filepath = filePath7TeV;
+        nPoints = nPoints7TeV_p15;
+        masses  = masses7TeV_p15;
+        mHVal   = mHVal7TeV_p15;
+        filepath = filePath7TeV;
       } else if (sqrts==8) {
-	nPoints = nPoints8TeV_p15;
-	masses  = masses8TeV_p15;
-	mHVal   = mHVal8TeV_p15;
-	filepath = filePath8TeV;
+        nPoints = nPoints8TeV_p15;
+        masses  = masses8TeV_p15;
+        mHVal   = mHVal8TeV_p15;
+        filepath = filePath8TeV;
+      }
+    } else if(useGGHMINLO){
+      if(sqrts==7){
+        nPoints = nPoints7TeV_MINLO;
+        masses = masses7TeV_MINLO;
+        mHVal = mHVal7TeV_MINLO;
+        filepath = filePath7TeV;
+      } else if(sqrts==8){
+        nPoints = nPoints8TeV_MINLO;
+        masses = masses8TeV_MINLO;
+        mHVal = mHVal8TeV_MINLO;
+        filepath = filePath8TeV;
       }
     } else { // OLD powheg samples
       if (sqrts==7) {
-	nPoints = nPoints7TeV;
-	masses  = masses7TeV;
-	mHVal   = mHVal7TeV;
-	filepath = filePath7TeV;
+        nPoints = nPoints7TeV;
+        masses  = masses7TeV;
+        mHVal   = mHVal7TeV;
+        filepath = filePath7TeV;
       } else if (sqrts==8) {
-	nPoints = nPoints8TeV;
-	masses  = masses8TeV;
-	mHVal   = mHVal8TeV;
-	filepath = filePath8TeV;
+        nPoints = nPoints8TeV;
+        masses  = masses8TeV;
+        mHVal   = mHVal8TeV;
+        filepath = filePath8TeV;
       }
     }
   } else if (process==qqH) {
@@ -302,7 +315,7 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
 
   // Define the object to compute XS and BRs
   HiggsCSandWidth *myCSW = new HiggsCSandWidth(gSystem->ExpandPathName("$CMSSW_BASE/src/Higgs/Higgs_CS_and_Width/txtFiles/"));
-	
+  
   TString infile;
 
   TGraph gJys(nPoints);
@@ -329,13 +342,15 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
 
     if (process==ggH) {
       if (useNewGGHPowheg){ 
-	infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_powheg15" + (masses[i]>200?"H":"jhuGenV3H") + (long)masses[i] + ".root";
+        infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_powheg15" + (masses[i]>200?"H":"jhuGenV3H") + (long)masses[i] + ".root";
+      } else if (useGGHMINLO){
+        infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_minloH" + (long)masses[i] + ".root";
       } else {
-	infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_H" + (long)masses[i] + ".root";
+        infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_H" + (long)masses[i] + ".root";
       }
     }
     
-    else if (process==qqH) infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_VBFH" + (long)masses[i] + ".root";
+    else if (process==qqH) infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";
     else if (process==WH || process==ZH || process==ttH) infile = filepath+ "/" + schannelFilename + "/HZZ4lTree_" + sprocess + (long)masses[i] + ".root";    
 
     TFile *f = TFile::Open(infile) ;
@@ -414,13 +429,13 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
       // We use the efficiency vs. generated events in the proper FS for ggH, VBF, and the efficiency vs all generated events for VH, ttH
       float effw = MC_weight_norm;
       if (process==ZH) {
-	effw = MC_weight_noxsec*filter_eff_ZH_8TeV;
+        effw = MC_weight_noxsec*filter_eff_ZH_8TeV;
       }
       else if (process==WH){
-	effw = MC_weight_noxsec*filter_eff_WH_8TeV;
+        effw = MC_weight_noxsec*filter_eff_WH_8TeV;
       }
       else if (process==ttH){
-	effw = MC_weight_noxsec*filter_eff_ttH_8TeV;
+        effw = MC_weight_noxsec*filter_eff_ttH_8TeV;
       }      
 
 //       double HPtWeight = 1.;
@@ -432,19 +447,19 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
       int NJets=0;
       double jetptc=0;
       for (unsigned int j=0; j<JetPt->size();j++){
-	if (JES==0.) jetptc=JetPt->at(j);
-	else if (JES!=0.) jetptc=JetPt->at(j)*(1+JES*JetSigma->at(j));
-	if (jetptc>30.) NJets++;
+        if (JES==0.) jetptc=JetPt->at(j);
+        else if (JES!=0.) jetptc=JetPt->at(j)*(1+JES*JetSigma->at(j));
+        if (jetptc>30.) NJets++;
       }
 
       // Untagged
       if (NJets<2){
-	untagAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
-	if ( (ZZMass>low_M && ZZMass<high_M) ) untagInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        untagAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        if ( (ZZMass>low_M && ZZMass<high_M) ) untagInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
       }
       else{ // Dijet
-	dijetAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
-	if ( (ZZMass>low_M && ZZMass<high_M) ) dijetInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        dijetAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        if ( (ZZMass>low_M && ZZMass<high_M) ) dijetInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
       }
       
     }
@@ -453,7 +468,7 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
     // except for the 124,125,126 new samples. As this factor is accounted for in the x-section, we have to 
     // apply it here.
     float m = masses[i];
-    if (!useNewGGHPowheg && process==ggH && sqrts==7 && m>=123.9 &&  m<=126.1) {
+    if (!useNewGGHPowheg && !useGGHMINLO && process==ggH && sqrts==7 && m>=123.9 &&  m<=126.1) {
       float mllCorr = 0.5 + 0.5*erf((m-80.85)/50.42);
       untagAll->totalCtr = untagAll->totalCtr/mllCorr;
       untagAll->eff_noweight=untagAll->eff_noweight/mllCorr;
@@ -467,31 +482,31 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
 
     if (verbose) {
       cout << " m = " << masses[i] 
-	   << " :" <<endl;
+     << " :" <<endl;
       cout << "Selected non-dijet events (all) = " << untagAll->numEventsRaw 
-	   << " Powheg Wtd= " << untagAll->numEventsPowheg
-	   << " PU Wtd= " << untagAll->numEventsPU
-	   << " Data/MC Wtd= " << untagAll->numEventsDataMC
-	   << " Efficiency= " << untagAll->totalCtr
-	   << endl;
+     << " Powheg Wtd= " << untagAll->numEventsPowheg
+     << " PU Wtd= " << untagAll->numEventsPU
+     << " Data/MC Wtd= " << untagAll->numEventsDataMC
+     << " Efficiency= " << untagAll->totalCtr
+     << endl;
       cout << "Selected non-dijet events (in mass window) = " << untagInMW->numEventsRaw 
-	   << " Powheg Wtd= " << untagInMW->numEventsPowheg
-	   << " PU Wtd= " << untagInMW->numEventsPU
-	   << " Data/MC Wtd= " << untagInMW->numEventsDataMC
-	   << " Efficiency= " << untagInMW->totalCtr
-	   << endl;
+     << " Powheg Wtd= " << untagInMW->numEventsPowheg
+     << " PU Wtd= " << untagInMW->numEventsPU
+     << " Data/MC Wtd= " << untagInMW->numEventsDataMC
+     << " Efficiency= " << untagInMW->totalCtr
+     << endl;
       cout << "Selected dijet events (all) = " << dijetAll->numEventsRaw 
-	   << " Powheg Wtd= " << dijetAll->numEventsPowheg
-	   << " PU Wtd= " << dijetAll->numEventsPU
-	   << " Data/MC Wtd= " << dijetAll->numEventsDataMC
-	   << " Efficiency= " << dijetAll->totalCtr
-	   << endl;
+     << " Powheg Wtd= " << dijetAll->numEventsPowheg
+     << " PU Wtd= " << dijetAll->numEventsPU
+     << " Data/MC Wtd= " << dijetAll->numEventsDataMC
+     << " Efficiency= " << dijetAll->totalCtr
+     << endl;
       cout << "Selected dijet events (in mass window) = " << dijetInMW->numEventsRaw 
-	   << " Powheg Wtd= " << dijetInMW->numEventsPowheg
-	   << " PU Wtd= " << dijetInMW->numEventsPU
-	   << " Data/MC Wtd= " << dijetInMW->numEventsDataMC
-	   << " Efficiency= " << dijetInMW->totalCtr
-	   << endl;
+     << " Powheg Wtd= " << dijetInMW->numEventsPowheg
+     << " PU Wtd= " << dijetInMW->numEventsPU
+     << " Data/MC Wtd= " << dijetInMW->numEventsDataMC
+     << " Efficiency= " << dijetInMW->totalCtr
+     << endl;
     }
 
     // All events
@@ -522,15 +537,15 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
     int prec = 3;
     if (process>=3) prec=5;
     (*txtYields) << left << setw(7) << fixed << setprecision(0) << masses[i] << setw(13) << fixed << setprecision(7) << xsTimesBR 
-		 << setw(13) << fixed << setprecision(prec) << untagInMW->totalCtr << setw(13) << yieldUntInMW << setw(13) << dijetratioValInMW[i]*totefficiencyValInMW[i] 
-		 << setw(13) << yieldTagInMW << setw(13) << fixed << setprecision(prec) << totefficiencyValInMW[i] << setw(13) << yieldTotInMW 
-		 << setw(13) << fixed << setprecision(prec) << untagAll->totalCtr << setw(13) << yieldUnt << setw(13) << dijetratioVal[i]*totefficiencyVal[i] 
-		 << setw(13) << yieldTag << setw(13) << totefficiencyVal[i] << setw(13) << yieldTot 
-		 << setw(13) << fixed << setprecision(0) << untagAll->numEventsRaw + dijetAll->numEventsRaw
-		 << setw(13) << fixed << setprecision(2) << untagAll->numEventsRaw + dijetAll->numEventsPowheg
-		 << setw(13) << untagAll->numEventsPU + dijetAll->numEventsPU
-		 << setw(13) << untagAll->numEventsDataMC + dijetAll->numEventsDataMC
-		 << endl;
+     << setw(13) << fixed << setprecision(prec) << untagInMW->totalCtr << setw(13) << yieldUntInMW << setw(13) << dijetratioValInMW[i]*totefficiencyValInMW[i] 
+     << setw(13) << yieldTagInMW << setw(13) << fixed << setprecision(prec) << totefficiencyValInMW[i] << setw(13) << yieldTotInMW 
+     << setw(13) << fixed << setprecision(prec) << untagAll->totalCtr << setw(13) << yieldUnt << setw(13) << dijetratioVal[i]*totefficiencyVal[i] 
+     << setw(13) << yieldTag << setw(13) << totefficiencyVal[i] << setw(13) << yieldTot 
+     << setw(13) << fixed << setprecision(0) << untagAll->numEventsRaw + dijetAll->numEventsRaw
+     << setw(13) << fixed << setprecision(2) << untagAll->numEventsRaw + dijetAll->numEventsPowheg
+     << setw(13) << untagAll->numEventsPU + dijetAll->numEventsPU
+     << setw(13) << untagAll->numEventsDataMC + dijetAll->numEventsDataMC
+     << endl;
      
   
     f->Close();
@@ -540,7 +555,7 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
   gJys.Fit(fitJys);
 
   (*txtYields) << endl << endl << endl;
-	
+  
   TGraphErrors* totgrEff;
   TGraphErrors* ratgrEff;
 
@@ -555,7 +570,7 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
   totgrEff->SetMarkerStyle(20);
   ratgrEff->SetMarkerStyle(20);
 
-  //ICHEP parametrization	
+  //ICHEP parametrization 
   //TF1 *polyFunc= new TF1("polyFunc","([0]+[1]*TMath::Erf( (x-[2])/[3] ))*([4]+[5]*x+[6]*x*x)", 110., xMax);
   //polyFunc->SetParameters(-4.42749e+00,4.61212e+0,-6.21611e+01,1.13168e+02,2.14321e+00,1.04083e-03,4.89570e-07);
 
@@ -584,7 +599,7 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
   ctot->SetGrid();
 
   TString outname = "sigFigs" + ssqrts +"/eff_" + sprocess + "_" + schannel + "_" + sjes;
-  if (!useNewGGHPowheg) outname+="_oldPwg";
+  if (!useNewGGHPowheg && !useGGHMINLO) outname+="_oldPwg";
 
   totgrEff->Fit(polyFunctot,"Rt"); 
   TString xaxisText = "m_{" + schannel + "}";
@@ -647,7 +662,7 @@ void signalEfficiency_w(int channel, double sqrts, int process, double JES, ofst
   crat->SetGrid();
 
   outname = "sigFigs" + ssqrts +"/eff_" + sprocess + "_" + schannel + "_" + sjes + "_ratio";
-  if (!useNewGGHPowheg) outname+="_oldPwg";
+  if (!useNewGGHPowheg && !useGGHMINLO) outname+="_oldPwg";
 
   TF1 *ratiofit=0;
   if (process==ggH || process==qqH) ratiofit = new TF1("ratiofit","([0]+[1]*x+[2]*x*x)",110.,xMax);
