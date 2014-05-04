@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 
 #if !defined(__CINT__) || defined(__MAKECINT__)
@@ -22,8 +23,8 @@
 #include "Config.h"
 
 //User determined Parameters
-const TString destDir = "../CreateDatacards/templates2D/TEST/";
-int useSqrts=2;                                                   // 0=use 7+8TeV; 1=use 7TeV only, 2 use 8TeV only
+const TString destDir = "../CreateDatacards/templates2D/";
+int useSqrts=0;                                                   // 0=use 7+8TeV; 1=use 7TeV only, 2 use 8TeV only
 TFile* fggH,*fqqH,*fqqZZ,*fggZZ,*fZX,*fZH,*fWH,*fttH;
 
 //Global Parameters (not tested if cause issues if altered)
@@ -46,6 +47,7 @@ TH2F* altshapes(TH2F* originalHist, int channel, int altnum);     // Generates a
 float altscale(float Fisher, int channel, int altnum);            // Find scale for alternative shapes given a Fisher value, channel and altnum same as altshapes()
 TH2F* mirrortemplates(int sampleIndex);                           // Generates mirror alternative shapes for Fisher when no second alternative exists
 bool test_bit(int mask, unsigned int iBit);                       // Used to identify correct CR events
+void progressbar(int val, int tot);                               // Output progress bar
 
 //---------------------------------------------------
 
@@ -109,9 +111,9 @@ void buildChain(TChain* bkgMC, int sampleIndex){
   int masses[100];
   if (useSqrts==1){
     if (sampleIndex==0){
-      nPoints=nPoints7TeV;
+      nPoints=nPoints7TeV_MINLO;
       for (int i=0;i<nPoints;i++){
-      	masses[i]=masses7TeV[i];
+      	masses[i]=masses7TeV_MINLO[i];
       }
     } else if (sampleIndex==1){
       nPoints=nVBFPoints7TeV;
@@ -128,9 +130,9 @@ void buildChain(TChain* bkgMC, int sampleIndex){
   }
   if (useSqrts==2){
     if (sampleIndex==0){
-      nPoints=nPoints8TeV;
+      nPoints=nPoints8TeV_MINLO;
       for (int i=0;i<nPoints;i++){
-      	masses[i]=masses8TeV[i];
+      	masses[i]=masses8TeV_MINLO[i];
       }
     } else if (sampleIndex==1){
       nPoints=nVBFPoints8TeV;
@@ -147,12 +149,12 @@ void buildChain(TChain* bkgMC, int sampleIndex){
   }
   if (useSqrts==0){
     if (sampleIndex==0){
-      nPoints=nPoints7TeV+nPoints8TeV;
-      for (int i=0;i<nPoints7TeV;i++){
-      	masses[i]=masses7TeV[i];
+      nPoints=nPoints7TeV_MINLO+nPoints8TeV_MINLO;
+      for (int i=0;i<nPoints7TeV_MINLO;i++){
+      	masses[i]=masses7TeV_MINLO[i];
       }
-      for (int i=0;i<nPoints8TeV;i++){
-      	masses[i+nPoints7TeV]=masses8TeV[i];
+      for (int i=0;i<nPoints8TeV_MINLO;i++){
+      	masses[i+nPoints7TeV_MINLO]=masses8TeV_MINLO[i];
       }
     } else if (sampleIndex==1){
       nPoints=nVBFPoints7TeV+nVBFPoints8TeV;
@@ -172,7 +174,7 @@ void buildChain(TChain* bkgMC, int sampleIndex){
       }
     }
   }
-  if(sampleIndex>4){
+  if(sampleIndex!=2 && sampleIndex!=3 && sampleIndex!=4 && sampleIndex!=-8){
     if(nPoints==0){
       cout<<"nPoints not set in Config.h"<<endl;
       abort();
@@ -180,10 +182,20 @@ void buildChain(TChain* bkgMC, int sampleIndex){
     for (int i=0; i<nPoints; i++){
       char tmp_finalInPath4mu[200],tmp_finalInPath4e[200],tmp_finalInPath2mu2e[200];
       string finalInPath4mu,finalInPath4e,finalInPath2mu2e;
-      if (sampleIndex==1){
-      	sprintf(tmp_finalInPath4mu,"4mu/HZZ4lTree_VBFH%i.root",masses[i]);
-      	sprintf(tmp_finalInPath4e,"4e/HZZ4lTree_VBFH%i.root",masses[i]);
-      	sprintf(tmp_finalInPath2mu2e,"2mu2e/HZZ4lTree_VBFH%i.root",masses[i]);
+      if (sampleIndex==0){
+        sprintf(tmp_finalInPath4mu,"4mu/HZZ4lTree_minloH%i.root",masses[i]);
+        sprintf(tmp_finalInPath4e,"4e/HZZ4lTree_minloH%i.root",masses[i]);
+        sprintf(tmp_finalInPath2mu2e,"2mu2e/HZZ4lTree_minloH%i.root",masses[i]);
+      }else if (sampleIndex==1){
+        if(masses[i]<200){
+      	 sprintf(tmp_finalInPath4mu,"4mu/HZZ4lTree_VBFH%i.root",masses[i]);
+      	 sprintf(tmp_finalInPath4e,"4e/HZZ4lTree_VBFH%i.root",masses[i]);
+      	 sprintf(tmp_finalInPath2mu2e,"2mu2e/HZZ4lTree_VBFH%i.root",masses[i]);
+        } else{
+         sprintf(tmp_finalInPath4mu,"4mu/HZZ4lTree_powheg15VBFH%i.root",masses[i]);
+         sprintf(tmp_finalInPath4e,"4e/HZZ4lTree_powheg15VBFH%i.root",masses[i]);
+         sprintf(tmp_finalInPath2mu2e,"2mu2e/HZZ4lTree_powheg15VBFH%i.root",masses[i]);
+        }
       }else if (sampleIndex==5){
       	sprintf(tmp_finalInPath4mu,"4mu/HZZ4lTree_ZH%i.root",masses[i]);
       	sprintf(tmp_finalInPath4e,"4e/HZZ4lTree_ZH%i.root",masses[i]);
@@ -202,7 +214,7 @@ void buildChain(TChain* bkgMC, int sampleIndex){
       	finalInPath4e = filePath + tmp_finalInPath4e;
       	finalInPath2mu2e = filePath + tmp_finalInPath2mu2e;
       } else if (useSqrts==0){
-      	if ((sampleIndex==0 && i<nPoints7TeV) || (sampleIndex==1 && i<nVBFPoints7TeV) || ((sampleIndex==5 || sampleIndex==6 || sampleIndex==7) && i<nVHPoints7TeV)){
+      	if ((sampleIndex==0 && i<nPoints7TeV_MINLO) || (sampleIndex==1 && i<nVBFPoints7TeV) || ((sampleIndex==5 || sampleIndex==6 || sampleIndex==7) && i<nVHPoints7TeV)){
       	  finalInPath4mu = filePath7TeV + tmp_finalInPath4mu;
       	  finalInPath4e = filePath7TeV + tmp_finalInPath4e;
       	  finalInPath2mu2e = filePath7TeV + tmp_finalInPath2mu2e;
@@ -217,9 +229,13 @@ void buildChain(TChain* bkgMC, int sampleIndex){
       bkgMC->Add(finalInPath2mu2e.c_str());
     }
   }
-  else if (sampleIndex==0){
+  /*else if (sampleIndex==0){
     if(useSqrts<2){
-      //WAITING ON PIETRO
+      for(int i=0;i<nPoints;i++){
+        bkgMC->Add(filepath7TeV + "4mu/HZZ4lTree_minloH" + (long)masses[i] + ".root");
+        bkgMC->Add(filepath7TeV + "4e/HZZ4lTree_minloH" + (long)masses[i] + ".root");
+        bkgMC->Add(filepath7TeV + "2mu2e/HZZ4lTree_minloH" + (long)masses[i] + ".root");
+      }
     }
     if(useSqrts%2==0){
       bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH90.root");
@@ -328,9 +344,21 @@ void buildChain(TChain* bkgMC, int sampleIndex){
       bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH950.root");
       bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH1000.root");
     }
-  }
-  else if(sampleIndex==1){
+  }*/
+  /*else if(sampleIndex==1){
+    if(useSqrts<2){
+      for(int i=0;i<nPoints;i++){
+        bkgMC->Add(filepath7TeV + "4mu/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
+        bkgMC->Add(filepath7TeV + "4e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
+        bkgMC->Add(filepath7TeV + "2mu2e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
+      }
+    }
     if(useSqrts%2==0){
+      for(int i=0;i<nPoints;i++){
+        bkgMC->Add(filepath8TeV + "4mu/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
+        bkgMC->Add(filepath8TeV + "4e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
+        bkgMC->Add(filepath8TeV + "2mu2e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
+      }
       bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH116.root");
       bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH117.root");
       bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH118.root");
@@ -458,7 +486,7 @@ void buildChain(TChain* bkgMC, int sampleIndex){
       bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH950.root");
       bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH1000.root");
     }
-  }
+  }*/
   else if (sampleIndex==2){
     if(useSqrts<2){
       bkgMC->Add(filePath7TeV + "4mu/HZZ4lTree_ZZTo4mu.root");
@@ -773,14 +801,22 @@ TH2F* fillTemplate(int sampleIndex,bool isLowMass,int updown){
 
   //bkgHist->Sumw2();
 
-  //int percent=0;
-
   //Fill histogram
   for(int i=0; i<bkgMC->GetEntries(); i++){
     bkgMC->GetEntry(i);
-    if (i%50000==0){
+    /*if (i%50000==0){
       cout << "event: " << i << "/" << bkgMC->GetEntries() <<endl;
-    }
+    }*/
+    /*if(i%percent==0){
+      cout<<"[ "<<i/percent<<"% |";
+      for(int k=0;k<i/percent;k++) cout<<"=";
+      if(i%percent!=100) cout<<">";
+      for(int k=i/percent+1;k<100;k++) cout<<" ";
+      cout<<"| ]";
+      fflush(stdout);
+      putchar('\r');
+    }*/
+    progressbar(i,bkgMC->GetEntries());
     //cout<<pvbf<<" "<<phjj;
     if((sampleIndex==4 && (test_bit(CRflag,5) || test_bit(CRflag,7) || test_bit(CRflag,9) || test_bit(CRflag,11))) || sampleIndex!=4){
       if (mass<100 || (sampleIndex!=4 && (njets<2 || phjj==-1. || pvbf==-1.)) || (sampleIndex==4 && (phjj==-1. || pvbf==-1.))) continue;
@@ -794,8 +830,8 @@ TH2F* fillTemplate(int sampleIndex,bool isLowMass,int updown){
       //cout<<mass<<" "<<sampleIndex<<" "<<phjj<<" "<<pvbf<<" "<<Djet;
       bkgHist->Fill(mass,Djet,w);
     }
-    //cout<<endl;
   }
+  cout<<endl;
 
   /*int nXbins=bkgHist->GetNbinsX();
   int nYbins=bkgHist->GetNbinsY();
@@ -908,9 +944,9 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
       if( binMzz>1400) effectiveArea=40;
       
       for(int a=-effectiveArea; a<=effectiveArea; a++){
-	if(a+i<1 || a+i>nXbins || j>nYbins || j<1) continue;
-	average+=origHist->GetBinContent(a+i,j);
-	binsUsed++;
+      	if(a+i<1 || a+i>nXbins || j>nYbins || j<1) continue;
+      	average+=origHist->GetBinContent(a+i,j);
+      	binsUsed++;
       }
       rebinnedHist->SetBinContent(i,j,average/binsUsed);
       average=0;
@@ -954,14 +990,14 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
       float binvalue = rebinnedHist->GetBinContent(i,j);
       if(binvalue!=0) continue;
       for (int i2=-1;i2<=1;i2++){
-	if (i2+i<1 || i2+i>nXbins || j<1 || j>nYbins) continue;
-	average+=rebinnedHist->GetBinContent(i+i2,j);
-	binsUsed++;
+      	if (i2+i<1 || i2+i>nXbins || j<1 || j>nYbins) continue;
+      	average+=rebinnedHist->GetBinContent(i+i2,j);
+      	binsUsed++;
       }
       for (int j2=-1;j2<=1;j2++){
-	if (i<1 || i>nXbins || j2+j<1 || j2+j>nYbins) continue;
-	average+=rebinnedHist->GetBinContent(i,j+j2);
-	binsUsed++;
+      	if (i<1 || i>nXbins || j2+j<1 || j2+j>nYbins) continue;
+      	average+=rebinnedHist->GetBinContent(i,j+j2);
+      	binsUsed++;
       }
       rebinnedHist->SetBinContent(i,j,average/binsUsed);
       average=0;
@@ -1039,15 +1075,15 @@ TH2F* rebin_lowstatistics(TH2F* finalhist, int sampleIndex){
     //Fill each mass point with low or high mass projections
     for(int i=1; i<=nXbins;i++){
       for(int j=1; j<=nYbins;j++){
-	float binMzz = finalhist->GetBinCenter(i);
-	if (binMzz<180){
-	  temp=lowProj->GetBinContent(j);
-	  finalhist->SetBinContent(i,j,temp);
-	}
-	else if (binMzz>=180){
-	  temp=highProj->GetBinContent(j);
-	  finalhist->SetBinContent(i,j,temp);
-	}
+      	float binMzz = finalhist->GetBinCenter(i);
+      	if (binMzz<180){
+      	  temp=lowProj->GetBinContent(j);
+      	  finalhist->SetBinContent(i,j,temp);
+      	}
+      	else if (binMzz>=180){
+      	  temp=highProj->GetBinContent(j);
+      	  finalhist->SetBinContent(i,j,temp);
+      	}
       }
     }
 
@@ -1070,8 +1106,8 @@ TH2F* rebin_lowstatistics(TH2F* finalhist, int sampleIndex){
     //Fill each mass point with full projection
     for(int i=1; i<=nXbins;i++){
       for(int j=1; j<=nYbins;j++){
-	temp=fullProj->GetBinContent(j);
-	finalhist->SetBinContent(i,j,temp);
+      	temp=fullProj->GetBinContent(j);
+      	finalhist->SetBinContent(i,j,temp);
       }
     }
 
@@ -1098,7 +1134,7 @@ TH2F* rebin_lowstatistics(TH2F* finalhist, int sampleIndex){
     norm=tempProj->Integral();
     if (norm>0) { // Avoid introducing NaNs in the histogram
       for(int j=1; j<=nYbins; j++){
-	finalhist->SetBinContent(i,j, finalhist->GetBinContent(i,j)/norm);
+      	finalhist->SetBinContent(i,j, finalhist->GetBinContent(i,j)/norm);
       }
     }
   }
@@ -1290,7 +1326,7 @@ TH2F* mirrortemplates(int sampleIndex){
     norm=tempProj->Integral();
     if (norm>0) { // Avoid introducing NaNs in the histogram
       for(int j=1; j<=alt2fisher->GetNbinsY(); j++){
-	alt2fisher->SetBinContent(i,j,alt2fisher->GetBinContent(i,j)/norm);
+      	alt2fisher->SetBinContent(i,j,alt2fisher->GetBinContent(i,j)/norm);
       }
     }
     //if(norm==0.) cout<<"HERE?"<<endl;
@@ -1301,4 +1337,25 @@ TH2F* mirrortemplates(int sampleIndex){
   alt2fisher->Draw("colz");
 	 	 
   return alt2fisher;
+}
+
+void progressbar(int val, int tot){
+  int percent=floor(0.01*tot);
+
+  if(val%percent==0 && val!=tot){
+    cout<<"[ "<<setw(3)<<val/percent<<"% |";
+    for(int k=1;k<val/percent;k++) cout<<"=";
+    if(val%percent!=100) cout<<">";
+    for(int k=val/percent+1;k<100;k++) cout<<" ";
+    cout<<"| ]";
+    fflush(stdout);
+    putchar('\r');
+  }
+  else if(val==tot){
+    cout<<"[ 100% |";
+    for(int k=0;k<100;k++) cout<<"=";
+    cout<<"| ]";
+    fflush(stdout);
+    putchar('\r');        
+  }
 }
