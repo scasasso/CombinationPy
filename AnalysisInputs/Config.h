@@ -55,15 +55,24 @@
 //TString filePath7TeV = "root://lxcms02//data/Higgs/rootuplesOut/130702b/PRODFSR/"; //FIXME: statistical tree not yet ready, take those from previous production
 //TString filePath8TeV = "root://lxcms02//data/Higgs/rootuplesOut/130715/PRODFSR_8TeV/";
 
-/* TString filePath7TeV = "root://lxcms02//data/Higgs/rootuplesOut/130720d/PRODFSR/";	  */
+/* TString filePath7TeV = "root://lxcms02//data/Higgs/rootuplesOut/130720d/PRODFSR/"; */
 /* TString filePath8TeV = "root://lxcms02//data/Higgs/rootuplesOut/130720d/PRODFSR_8TeV/"; */
 
 // High mass paper reweighted samples (needed to extract resolution function or ggH)
 /* TString filePath7TeV = "root://lxcms02///data/Higgs/rootuplesOut/140311_HMPaper/C0.2/PRODFSR/";	  */
 /* TString filePath8TeV = "root://lxcms02///data/Higgs/rootuplesOut/140311_HMPaper/C0.2/PRODFSR_8TeV/";	  */
 
-TString filePath7TeV = "root://lxcms02///data/Higgs/rootuplesOut/140311_HMPaper/C1.0/PRODFSR/";	 
-TString filePath8TeV = "root://lxcms02///data/Higgs/rootuplesOut/140311_HMPaper/C1.0/PRODFSR_8TeV/";	 
+/* TString filePath7TeV = "root://lxcms02///data/Higgs/rootuplesOut/140311_HMPaper/C1.0/PRODFSR/";	  */
+/* TString filePath8TeV = "root://lxcms02///data/Higgs/rootuplesOut/140311_HMPaper/C1.0/PRODFSR_8TeV/";	  */
+
+
+// High mass paper reweighted samples (new round)
+/* TString filePath7TeV = "/afs/cern.ch/work/s/scasasso/private/H4l_HighMass_Git/CMSSW_5_3_9/src/ZZAnalysis/AnalysisStep/test/Macros/140515_LOPlusInt/C02/PRODFSR/"; */
+/* TString filePath8TeV = "/afs/cern.ch/work/s/scasasso/private/H4l_HighMass_Git/CMSSW_5_3_9/src/ZZAnalysis/AnalysisStep/test/Macros/140515_LOPlusInt/C02/PRODFSR_8TeV/"; */
+
+TString filePath7TeV = "/afs/cern.ch/work/s/scasasso/private/H4l_HighMass_Git/CMSSW_5_3_9/src/ZZAnalysis/AnalysisStep/test/Macros/140515_LOPlusInt/C10/PRODFSR/";
+TString filePath8TeV = "/afs/cern.ch/work/s/scasasso/private/H4l_HighMass_Git/CMSSW_5_3_9/src/ZZAnalysis/AnalysisStep/test/Macros/140515_LOPlusInt/C10/PRODFSR_8TeV/";
+
 
 
 
@@ -101,13 +110,13 @@ int masses8TeV_p15[nPoints8TeV_p15]   = {115,120,122,124,125,126,128,130,135,140
 double mHVal8TeV_p15[nPoints8TeV_p15] = {115,120,122,124,125,126,128,130,135,140,145,150,160,170,175,180,185,190,200,225,250,275,300,350,400,450,500,550,600,650,700,800,900,1000};
 
 // List of new powheg samples for high mass (mH>400 GeV) studies
-const int nPoints7TeV_p15_HM = 7;
-int masses7TeV_p15_HM[nPoints7TeV_p15_HM]   = {400,500,600,700,800,900,1000};
-double mHVal7TeV_p15_HM[nPoints7TeV_p15_HM] = {400,500,600,700,800,900,1000};
+const int nPoints7TeV_p15_HM = 10;
+int masses7TeV_p15_HM[nPoints7TeV_p15_HM]   = {400,450,500,550,600,650,700,800,900,1000};
+double mHVal7TeV_p15_HM[nPoints7TeV_p15_HM] = {400,450,500,550,600,650,700,800,900,1000};
 
-const int nPoints8TeV_p15_HM = 7;
-int masses8TeV_p15_HM[nPoints8TeV_p15_HM]   = {400,500,600,700,800,900,1000};
-double mHVal8TeV_p15_HM[nPoints8TeV_p15_HM] = {400,500,600,700,800,900,1000};
+const int nPoints8TeV_p15_HM = 10;
+int masses8TeV_p15_HM[nPoints8TeV_p15_HM]   = {400,450,500,550,600,650,700,800,900,1000};
+double mHVal8TeV_p15_HM[nPoints8TeV_p15_HM] = {400,450,500,550,600,650,700,800,900,1000};
 
 
 //List of "powheg15" ggH samples alone (available for high mass only +125,126); just for debugging purposes
@@ -121,6 +130,15 @@ double mHVal8TeV_p15_HM[nPoints8TeV_p15_HM] = {400,500,600,700,800,900,1000};
 
 
 //--- VBF
+const int nVBFPoints7TeV_HM = 10; 
+int VBFmasses7TeV_HM[nVBFPoints7TeV_HM]   = {400,450,500,550,600,650,700,800,900,1000};
+double mHVBFVal7TeV_HM[nVBFPoints7TeV_HM] = {400,450,500,550,600,650,700,800,900,1000};
+
+const int nVBFPoints8TeV_HM = 10;
+int VBFmasses8TeV_HM[nVBFPoints8TeV_HM]   = {400,450,500,550,600,650,700,800,900,1000};
+double mHVBFVal8TeV_HM[nVBFPoints8TeV_HM] = {400,450,500,550,600,650,700,800,900,1000};
+
+
 const int nVBFPoints7TeV = 32; //FIXME: 950 GeV sample is not there since high mass weights are not available
 int VBFmasses7TeV[nVBFPoints7TeV]   = {115,120,125,130,140,150,160,170,180,190,200,210,220,230,250,275,300,325,350,375,400,425,450,475,500,575,600,650,700,800,900,/*950,*/1000};
 double mHVBFVal7TeV[nVBFPoints7TeV] = {115,120,125,130,140,150,160,170,180,190,200,210,220,230,250,275,300,325,350,375,400,425,450,475,500,575,600,650,700,800,900,/*950,*/1000};

@@ -41,16 +41,20 @@
 // New flags and options
 TString appendStr("_C1.0_fitted");
 Double_t cprimeVal = 1.0;
+
 bool fixResPars = false;
+bool copyToWeb = false;
+const char* webDir = "/afs/cern.ch/user/s/scasasso/www/H4l/HighMass/SignalShapesReco/%iTeV/";
 
 //Parameters to choose which samples to examine
 //HCP option is useggH=true, useVBF,useVH = false and usedijet,usenondijet=true
 bool debug = false;
-bool useggH = true;
-bool useVBF = false;
+bool useggH = false;
+bool useVBF = true;
 bool useVH = false;
 bool usedijet = true;
 bool usenondijet = true;
+bool setParSeed = true;
 
 TFile* massfits;
 
@@ -97,7 +101,18 @@ void signalFitsHMP(){
 //The actual job
 void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
 
-  (*interpCode) << "    if (fixResPars){ " << endl;
+  TString cprimeTS;
+  if (cprimeVal==0.2) cprimeTS = "C0.2";
+  else cprimeTS = "C1.0";
+
+  TString ssqrts;
+  if (sqrts==7) ssqrts = "7TeV";
+  else if (sqrts==8) ssqrts = "8TeV";
+  else {
+    std::cout << "Choose 7 or 8 TeV as center of mass energy" << std::endl;
+    exit(1);
+  }
+
   (*interpCode) << "      if (sqrts==" << sqrts << "){" << endl;
   (*interpCode) << "	    if (channel==" << channel << "){" << endl;
   (*interpCode) << "  	      // Fitted on the C" << cprimeVal << endl;
@@ -107,17 +122,8 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   if (channel == 2) schannel = "4e";
   if (channel == 3) schannel = "2e2mu";
   cout << "Final state = " << schannel << " and sqrt(s) = " << sqrts << endl;
-
-  char inParFile[192];
-  sprintf(inParFile,"ParamsGrid_SigInt_%iTeV.root",sqrts);
-  TString TS_inParFile(inParFile);
-
-  TFile* fPar = TFile::Open(TS_inParFile,"READ");
-  TH2D* hR = (TH2D*)fPar->Get("h_r");
-  TH2D* hAlpha = (TH2D*)fPar->Get("h_Alpha");
-  TH2D* hBeta = (TH2D*)fPar->Get("h_Beta");
-  TH2D* hGamma = (TH2D*)fPar->Get("h_Gamma");
-  TH2D* hDelta = (TH2D*)fPar->Get("h_Delta");
+  Bool_t is8TeV = true;
+  if (sqrts==7) is8TeV=false;
 
 
   //Pick the correct mass points and paths
@@ -128,16 +134,16 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   if (sqrts==7) {
     nPointsggH = nPoints7TeV_p15_HM;
     massesggH  = mHVal7TeV_p15_HM;
-    nPointsVBF = nVBFPoints7TeV;
-    massesVBF  = mHVBFVal7TeV;
+    nPointsVBF = nVBFPoints7TeV_HM;
+    massesVBF  = mHVBFVal7TeV_HM;
     nPointsVH = nVHPoints7TeV;
     massesVH  = mHVHVal7TeV;
     filePath = filePath7TeV;  
   } else if (sqrts==8) {
     nPointsggH = nPoints8TeV_p15_HM;
     massesggH  = mHVal8TeV_p15_HM;
-    nPointsVBF = nVBFPoints8TeV;
-    massesVBF  = mHVBFVal8TeV;
+    nPointsVBF = nVBFPoints8TeV_HM;
+    massesVBF  = mHVBFVal8TeV_HM;
     nPointsVH = nVHPoints8TeV;
     massesVH  = mHVHVal8TeV;
     filePath = filePath8TeV;
@@ -146,8 +152,10 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
 
   int nPoints;
   double masses[200];
+  double masses_err[200];
   for (int i=0;i<200;i++){
     masses[i]=-1;
+    masses_err[i]=0;
   }
   if (useggH){
     for (int i=0; i<nPointsggH; i++){
@@ -226,7 +234,7 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
     //Open input file with shapes and retrieve the tree
     char tmp_finalInPathggH[200],tmp_finalInPathVBF[200],tmp_finalInPathZH[200],tmp_finalInPathWH[200],tmp_finalInPathttH[200];
     sprintf(tmp_finalInPathggH,"/HZZ4lTree_powheg15H%i.root",masses[i]);
-    sprintf(tmp_finalInPathVBF,"/HZZ4lTree_VBFH%i.root",masses[i]);
+    sprintf(tmp_finalInPathVBF,"/HZZ4lTree_powheg15VBFH%i.root",masses[i]);
     sprintf(tmp_finalInPathZH,"/HZZ4lTree_ZH%i.root",masses[i]);
     sprintf(tmp_finalInPathWH,"/HZZ4lTree_WH%i.root",masses[i]);
     sprintf(tmp_finalInPathttH,"/HZZ4lTree_ttH%i.root",masses[i]);
@@ -279,22 +287,28 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
     }
 
     double valueWidth = WidthValue(masses[i]);
-    Double_t gammaVal = hGamma->GetBinContent(hBeta->FindBin(masses[i],cprimeVal));
+    Double_t gammaVal = valueWidth;
     double windowVal = max(valueWidth,1.);
     double lowside = 100.;
     if(masses[i] > 300) lowside = 200.;
     double low_M = max( (masses[i] - 15.*windowVal), lowside) ;
     double high_M = min( (masses[i] + 10.*windowVal), 1400.);
 
+
     // FIXME: as soon as fit ranges can be defined in a continuous way, replace this twofold ranges definition
     if(masses[i] > 399.){
 
       if (cprimeVal>0.9){
 	// For the C'^2 = 1.0 case
-	low_M = max( (masses[i] - 2.*windowVal), 250.) ;
-	// high_M = min( (masses[i] + 2.*windowVal), 1600.);
-	high_M = min( (masses[i] + 2.*windowVal), 1300.);
-	if (fabs(masses[i]-800)<5) high_M = 1150;
+	if (useggH){
+	  low_M = max( (masses[i] - 2.*windowVal), 250.) ;
+	  high_M = min( (masses[i] + 2.*windowVal), 1450.);
+	  // high_M = min( (masses[i] + 2.*windowVal), 1300.);
+	}
+	else if (!useggH && useVBF){
+	  low_M = max( (masses[i] - 2.*windowVal), 250.) ;
+	  high_M = min( (masses[i] + 2.*windowVal), 1500.);
+	}
       }
       else{
 	// For the C'^2 = 0.2 case
@@ -302,28 +316,40 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
 	  low_M = 360;
 	  high_M = 430; 
 	}
+	else if (masses[i]<451.){
+	  low_M = 400;
+	  high_M = 490; 	
+	}
 	else if (masses[i]<501.){
 	  low_M = 440;
 	  high_M = 540; 	
+	}
+	else if (masses[i]<551.){
+	  low_M = 485;
+	  high_M = 600; 	
 	}
 	else if (masses[i]<601.){
 	  low_M = 520.;
 	  high_M = 660.; 	
 	}
+	else if (masses[i]<651.){
+	  low_M = 570.;
+	  high_M = 710.; 	
+	}
 	else if (masses[i]<701.){
-	  low_M = 600.;
-	  high_M = 760.; 	
+	  low_M = 610.;
+	  high_M = 765.; 	
 	}
 	else if (masses[i]<801.){
-	  low_M = 680.;
-	  high_M = 860.; 	
+	  low_M = 690.;
+	  high_M = 870.; 	
 	}
 	else if (masses[i]<901.){
-	  low_M = 730.;
-	  high_M = 970.; 	
+	  low_M = 740.;
+	  high_M = 980.; 	
 	}
 	else if (masses[i]<1001.){
-	  low_M = 800.;
+	  low_M = 820.;
 	  high_M = 1100.; 	
 	}
 	else {
@@ -334,18 +360,21 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
       
     }
 
+    double low_M_plot = low_M;
+    double high_M_plot = high_M;
+    
+
     cout << "lowM = " << low_M << ", highM = " << high_M << endl;
 
     //Set the observable and get the RooDataSomething
-    RooRealVar ZZMass("ZZMass","ZZMass",low_M,high_M);
+    RooRealVar ZZMass("ZZMass","ZZMass",low_M_plot,high_M_plot);
+    ZZMass.setRange("plotRange",low_M_plot,high_M_plot);
     ZZMass.setRange("fitRange",low_M,high_M);
-    ZZMass.setRange("plotRange",max( (masses[i] - 2.*windowVal), 250.),min( (masses[i] + 2.*windowVal), 1300.));
     RooRealVar MC_weight("MC_weight","MC_weight",0.,10.);
     RooRealVar NJets("NJets","NJets",0.,100.);
     RooRealVar genProcessId("genProcessId","genProcessId",0.,150.);
 
-    if(channel == 2) ZZMass.setBins(50);
-    if(channel == 3) ZZMass.setBins(50);
+    ZZMass.setBins(50);
 
     RooDataSet* set;
 
@@ -379,27 +408,26 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
     RooRealVar one("one","one",1.0);
     one.setConstant(kTRUE);
 
-
-    Double_t rVal = hR->GetBinContent(hR->FindBin(masses[i],cprimeVal));
-    Double_t alphaVal = hAlpha->GetBinContent(hAlpha->FindBin(masses[i],cprimeVal));
-    Double_t betaVal = hBeta->GetBinContent(hBeta->FindBin(masses[i],cprimeVal));
-    Double_t deltaVal = hDelta->GetBinContent(hDelta->FindBin(masses[i],cprimeVal));
-
-    RooRealVar k("k","k",0.25);
-    RooRealVar delta("delta","delta",deltaVal);
     RooRealVar CSquared("CSquared","C'^{2}",cprimeVal);
     RooRealVar BRnew("BRnew","BR_{new}",0.);
-    RooRealVar alpha("alpha","#alpha",alphaVal);
-    RooRealVar beta("beta","#beta",betaVal);
-    RooRealVar r("r","r",rVal,rVal-0.2*rVal,rVal+0.2*rVal);
-    r.setConstant(kTRUE);
+    RooRealVar IntStr("IntStr","#IntStr",1.);
 
-    RooSigPlusInt SignalTheor("model","model",ZZMass,MHStar,delta,Gamma_TOT,k,CSquared,BRnew,alpha,beta,r);
+    RooAbsPdf* SignalTheor;
+    if (useggH) {
+      SignalTheor = new RooBWHighMassGGH("model","model",ZZMass,MHStar,CSquared,BRnew,IntStr,is8TeV);
+    }
+    else if (useVBF) {
+      SignalTheor = new RooCPSHighMassVBF("model","model",ZZMass,MHStar,CSquared,BRnew,IntStr,is8TeV);
+    }
+    else {
+      std::cout<<"You have to set at least 'useggH' or 'useVBF' to true"<<std::endl;
+      exit(1);
+    }
 
     //Experimental resolution
-    RooRealVar meanCB("meanCB","meanCB",0.,-0.8,0.8);
+    RooRealVar meanCB("meanCB","meanCB",0.,-1.0,1.0);
     RooRealVar sigmaCB("sigmaCB","sigmaCB",1.,0.,5.);
-    RooRealVar sigmaCB_high("sigmaCB_high","sigmaCB_high",6.5,3.,10.);
+    RooRealVar sigmaCB_high("sigmaCB_high","sigmaCB_high",5,3.,8.);
     RooRealVar alphaCB_1("alphaCB_1","alphaCB_1",1.,0.4,2.);
     RooRealVar nCB_1("nCB_1","nCB_1",5.,0.,12.);
     nCB_1.setConstant(kTRUE);
@@ -411,56 +439,130 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
     float m = masses[i];
 
 
-    // Fixing the values to the one extracted from the C'^2 = 0.2 case
-    if (fixResPars){
+    // Fixing the values to the one extracted from the C'^2 = 0.2 case (extracted from ggH case)
+    if (useggH && setParSeed){ 
+      if (sqrts==8){
+	if (channel==1){
+	  // Fitted on the C0.2
+	  sigmaCB_high.setVal(4.53024+-0.00426436*m+2.8606e-06*m*m+1.18084e-08*m*m*m+6.76142e-12*m*m*m*m+-1.65141e-14*m*m*m*m*m);
+	  meanCB.setVal(0.880437+-0.00175511*m+-5.3235e-07*m*m+1.54134e-09*m*m*m+1.45748e-12*m*m*m*m+-1.01434e-15*m*m*m*m*m);
+	  alphaCB_1.setVal(1.21602+-0.000110275*m+-6.71223e-07*m*m+-2.29648e-10*m*m*m+3.78332e-13*m*m*m*m+5.47917e-16*m*m*m*m*m);
+	  alphaCB_2.setVal(2.86583+-0.00436325*m+-1.34961e-06*m*m+4.90553e-09*m*m*m+4.51724e-12*m*m*m*m+-6.01361e-15*m*m*m*m*m);
+        }
+      }
+      if (sqrts==8){
+	if (channel==2){
+	  // Fitted on the C0.2
+	  sigmaCB_high.setVal(10.9323+-0.0375246*m+5.03703e-05*m*m+3.11412e-08*m*m*m+-8.38849e-11*m*m*m*m+3.44008e-14*m*m*m*m*m);
+	  meanCB.setVal(-12.3553+0.0674625*m+-9.97082e-05*m*m+-1.84552e-08*m*m*m+1.35133e-10*m*m*m*m+-7.20926e-14*m*m*m*m*m);
+	  alphaCB_1.setVal(8.39501+-0.0369883*m+4.75209e-05*m*m+2.54207e-08*m*m*m+-8.60408e-11*m*m*m*m+4.26562e-14*m*m*m*m*m);
+	  alphaCB_2.setVal(2.08321+-0.00079577*m+-7.3537e-06*m*m+1.32439e-08*m*m*m+-6.05768e-12*m*m*m*m+-4.60935e-16*m*m*m*m*m);
+        }
+      }
+      if (sqrts==8){
+	if (channel==3){
+	  // Fitted on the C0.2
+	  sigmaCB_high.setVal(-16.93+0.112952*m+-0.000152425*m*m+-4.66275e-08*m*m*m+2.18637e-10*m*m*m*m+-1.08984e-13*m*m*m*m*m);
+	  meanCB.setVal(-19.4116+0.102812*m+-0.000152008*m*m+-3.40849e-08*m*m*m+2.27168e-10*m*m*m*m+-1.25426e-13*m*m*m*m*m);
+	  alphaCB_1.setVal(1.67181+0.000115226*m+-3.93008e-06*m*m+-9.42681e-10*m*m*m+8.39824e-12*m*m*m*m+-4.77952e-15*m*m*m*m*m);
+	  alphaCB_2.setVal(2.94976+-0.00277342*m+-4.74973e-06*m*m+1.96315e-09*m*m*m+1.10653e-11*m*m*m*m+-8.02456e-15*m*m*m*m*m);
+        }
+      }
       if (sqrts==7){
 	if (channel==1){
 	  // Fitted on the C0.2
-	  sigmaCB_high.setVal(((0.786102+(0.00196526-0.0437839)*400+(4.91313e-06--5.26213e-05)*pow(400,2)+(1.22829e-08-2.114e-08)*pow(400,3)+3.07071e-11*pow(400,4)+7.67677e-14*pow(400,5))+0.0437839*m+-5.26213e-05*m*m+2.114e-08*m*m*m)); sigmaCB_high.setConstant(kTRUE);
-	  meanCB.setVal(((-0.0295214+(-7.38034e-05-0.0292789)*400+(-1.84508e-07--4.44546e-05)*pow(400,2)+(-4.61271e-10-2.15402e-08)*pow(400,3)+-1.15318e-12*pow(400,4)+-2.88308e-15*pow(400,5))+0.0292789*m+-4.44546e-05*m*m+2.15402e-08*m*m*m)); meanCB.setConstant(kTRUE);
-	  alphaCB_1.setVal(((0.183363+(0.000458408-0.00590286)*400+(1.14601e-06--1.06111e-05)*pow(400,2)+(2.86506e-09-5.61392e-09)*pow(400,3)+7.16261e-12*pow(400,4)+1.79065e-14*pow(400,5))+0.00590286*m+-1.06111e-05*m*m+5.61392e-09*m*m*m)); alphaCB_1.setConstant(kTRUE);
-	  alphaCB_2.setVal(((0.200009+(0.000500024--0.00136617)*400+(1.25005e-06--3.27474e-07)*pow(400,2)+(3.12516e-09-4.49393e-10)*pow(400,3)+7.81288e-12*pow(400,4)+1.95321e-14*pow(400,5))+-0.00136617*m+-3.27474e-07*m*m+4.49393e-10*m*m*m)); alphaCB_2.setConstant(kTRUE);
-	}
-	else if (channel==2){
+	  sigmaCB_high.setVal(31.6905+-0.1627*m+0.000268251*m*m+4.893e-08*m*m*m+-4.0735e-10*m*m*m*m+2.29134e-13*m*m*m*m*m);
+	  meanCB.setVal(-16.4877+0.0891798*m+-0.000137443*m*m+-2.34985e-08*m*m*m+2.067e-10*m*m*m*m+-1.18404e-13*m*m*m*m*m);
+	  alphaCB_1.setVal(5.81384+-0.0242094*m+3.30583e-05*m*m+1.18931e-08*m*m*m+-5.59469e-11*m*m*m*m+2.99477e-14*m*m*m*m*m);
+	  alphaCB_2.setVal(6.27062+-0.0252813*m+3.26626e-05*m*m+1.32288e-08*m*m*m+-5.45376e-11*m*m*m*m+2.81544e-14*m*m*m*m*m);
+        }
+      }
+      if (sqrts==7){
+	if (channel==2){
 	  // Fitted on the C0.2
-	  sigmaCB_high.setVal(((0.816228+(0.00204057--0.137186)*400+(5.10143e-06-0.000227819)*pow(400,2)+(1.27536e-08--1.16673e-07)*pow(400,3)+3.18839e-11*pow(400,4)+7.97096e-14*pow(400,5))+-0.137186*m+0.000227819*m*m+-1.16673e-07*m*m*m)); sigmaCB_high.setConstant(kTRUE);
-	  meanCB.setVal(((-0.0135269+(-3.38163e-05--0.0135245)*400+(-8.45421e-08-2.33866e-05)*pow(400,2)+(-2.11354e-10--1.14332e-08)*pow(400,3)+-5.28385e-13*pow(400,4)+-1.32114e-15*pow(400,5))+-0.0135245*m+2.33866e-05*m*m+-1.14332e-08*m*m*m)); meanCB.setConstant(kTRUE);
-	  alphaCB_1.setVal(((0.197481+(0.000493703--0.0162022)*400+(1.23426e-06-2.3071e-05)*pow(400,2)+(3.08564e-09--1.00702e-08)*pow(400,3)+7.7141e-12*pow(400,4)+1.92851e-14*pow(400,5))+-0.0162022*m+2.3071e-05*m*m+-1.00702e-08*m*m*m)); alphaCB_1.setConstant(kTRUE);
-	  alphaCB_2.setVal(((0.256949+(0.000642374--0.140568)*400+(1.60593e-06-0.000213493)*pow(400,2)+(4.01483e-09--1.01699e-07)*pow(400,3)+1.00371e-11*pow(400,4)+2.50925e-14*pow(400,5))+-0.140568*m+0.000213493*m*m+-1.01699e-07*m*m*m)); alphaCB_2.setConstant(kTRUE);
-	}
-	else{
+	  sigmaCB_high.setVal(-12.7371+0.084158*m+-0.000114061*m*m+-2.97707e-08*m*m*m+1.6838e-10*m*m*m*m+-9.08215e-14*m*m*m*m*m);
+	  meanCB.setVal(18.1302+-0.0980912*m+0.000143725*m*m+3.71438e-08*m*m*m+-2.13802e-10*m*m*m*m+1.1303e-13*m*m*m*m*m);
+	  alphaCB_1.setVal(3.02238+-0.00968557*m+1.28765e-05*m*m+3.51457e-09*m*m*m+-1.77337e-11*m*m*m*m+9.03178e-15*m*m*m*m*m);
+	  alphaCB_2.setVal(3.31674+-0.0100594*m+1.23872e-05*m*m+3.5756e-09*m*m*m+-1.72705e-11*m*m*m*m+9.00383e-15*m*m*m*m*m);
+        }
+      }
+      if (sqrts==7){
+	if (channel==3){
 	  // Fitted on the C0.2
-	  sigmaCB_high.setVal(((0.785874+(0.00196469-0.0442967)*400+(4.91171e-06--5.34087e-05)*pow(400,2)+(1.22793e-08-2.15273e-08)*pow(400,3)+3.06982e-11*pow(400,4)+7.67454e-14*pow(400,5))+0.0442967*m+-5.34087e-05*m*m+2.15273e-08*m*m*m)); sigmaCB_high.setConstant(kTRUE);
- 	  meanCB.setVal(((-0.0297066+(-7.42664e-05-0.0301311)*400+(-1.85666e-07--4.58667e-05)*pow(400,2)+(-4.64165e-10-2.22915e-08)*pow(400,3)+-1.16041e-12*pow(400,4)+-2.90105e-15*pow(400,5))+0.0301311*m+-4.58667e-05*m*m+2.22915e-08*m*m*m)); meanCB.setConstant(kTRUE);
-	  alphaCB_1.setVal(((0.183317+(0.000458293-0.00616808)*400+(1.14573e-06--1.10595e-05)*pow(400,2)+(2.86432e-09-5.8565e-09)*pow(400,3)+7.16079e-12*pow(400,4)+1.7902e-14*pow(400,5))+0.00616808*m+-1.10595e-05*m*m+5.8565e-09*m*m*m)); alphaCB_1.setConstant(kTRUE);
-	  alphaCB_2.setVal(((0.200336+(0.000500842--0.001427)*400+(1.25211e-06--3.27917e-07)*pow(400,2)+(3.13025e-09-5.02815e-10)*pow(400,3)+7.82563e-12*pow(400,4)+1.95641e-14*pow(400,5))+-0.001427*m+-3.27917e-07*m*m+5.02815e-10*m*m*m)); alphaCB_2.setConstant(kTRUE);
+	  sigmaCB_high.setVal(7.85707+-0.0329166*m+7.185e-05*m*m+4.24507e-09*m*m*m+-1.09577e-10*m*m*m*m+6.50213e-14*m*m*m*m*m);
+	  meanCB.setVal(1.26046+-0.00388926*m+-3.98554e-07*m*m+4.76425e-09*m*m*m+3.86687e-12*m*m*m*m+-5.05511e-15*m*m*m*m*m);
+	  alphaCB_1.setVal(0.521945+0.00160607*m+3.12609e-07*m*m+-3.14525e-09*m*m*m+-2.06383e-12*m*m*m*m+3.4318e-15*m*m*m*m*m);
+	  alphaCB_2.setVal(1.85608+-0.00160577*m+-4.84323e-07*m*m+3.25779e-10*m*m*m+1.04032e-12*m*m*m*m+-5.80937e-16*m*m*m*m*m);
 	}
-      }// 7TeV
-      
-      else{
-	if (channel==1){
-	  // Fitted on the C0.2
-	  sigmaCB_high.setVal(((1.12482+(0.00281204-0.0241159)*400+(7.0301e-06--3.83572e-05)*pow(400,2)+(1.75753e-08-1.93221e-08)*pow(400,3)+4.39381e-11*pow(400,4)+1.09845e-13*pow(400,5))+0.0241159*m+-3.83572e-05*m*m+1.93221e-08*m*m*m)); sigmaCB_high.setConstant(kTRUE);
-	  meanCB.setVal(((-0.14709+(-0.000367724--0.00392939)*400+(-9.19309e-07-1.67077e-05)*pow(400,2)+(-2.29826e-09--1.13231e-08)*pow(400,3)+-5.74565e-12*pow(400,4)+-1.43642e-14*pow(400,5))+-0.00392939*m+1.67077e-05*m*m+-1.13231e-08*m*m*m)); meanCB.setConstant(kTRUE);
-	  alphaCB_1.setVal(((0.247082+(0.000617706--0.00859185)*400+(1.54427e-06-5.71764e-06)*pow(400,2)+(3.86068e-09--5.80474e-10)*pow(400,3)+9.65169e-12*pow(400,4)+2.41292e-14*pow(400,5))+-0.00859185*m+5.71764e-06*m*m+-5.80474e-10*m*m*m)); alphaCB_1.setConstant(kTRUE);
-	  alphaCB_2.setVal(((0.257664+(0.00064416--0.0149572)*400+(1.6104e-06-1.56168e-05)*pow(400,2)+(4.02601e-09--5.65521e-09)*pow(400,3)+1.0065e-11*pow(400,4)+2.51625e-14*pow(400,5))+-0.0149572*m+1.56168e-05*m*m+-5.65521e-09*m*m*m)); alphaCB_2.setConstant(kTRUE);
-	}
-	else if (channel==2){
-	  // Fitted on the C0.2
-	  sigmaCB_high.setVal(((0.745765+(0.00186441--0.0156989)*400+(4.66103e-06-4.34532e-05)*pow(400,2)+(1.16526e-08--2.89894e-08)*pow(400,3)+2.91315e-11*pow(400,4)+7.28285e-14*pow(400,5))+-0.0156989*m+4.34532e-05*m*m+-2.89894e-08*m*m*m)); sigmaCB_high.setConstant(kTRUE);
-	  meanCB.setVal(((-0.0386066+(-9.65166e-05-0.0457496)*400+(-2.41291e-07--6.74899e-05)*pow(400,2)+(-6.03229e-10-3.22642e-08)*pow(400,3)+-1.50807e-12*pow(400,4)+-3.77035e-15*pow(400,5))+0.0457496*m+-6.74899e-05*m*m+3.22642e-08*m*m*m)); meanCB.setConstant(kTRUE);
-	  alphaCB_1.setVal(((0.190398+(0.000475994-0.00910674)*400+(1.18999e-06--1.60194e-05)*pow(400,2)+(2.97496e-09-8.7402e-09)*pow(400,3)+7.43741e-12*pow(400,4)+1.85934e-14*pow(400,5))+0.00910674*m+-1.60194e-05*m*m+8.7402e-09*m*m*m)); alphaCB_1.setConstant(kTRUE);
-	  alphaCB_2.setVal(((0.196422+(0.000491054--0.000297765)*400+(1.22763e-06--2.33901e-07)*pow(400,2)+(3.06908e-09--2.75437e-10)*pow(400,3)+7.67272e-12*pow(400,4)+1.91816e-14*pow(400,5))+-0.000297765*m+-2.33901e-07*m*m+-2.75437e-10*m*m*m)); alphaCB_2.setConstant(kTRUE);
-	}
-	else {
-	  // Fitted on the C0.2
-	  sigmaCB_high.setVal(((0.99157+(0.00247892-0.0693237)*400+(6.19731e-06--9.30082e-05)*pow(400,2)+(1.54933e-08-3.92305e-08)*pow(400,3)+3.87332e-11*pow(400,4)+9.6833e-14*pow(400,5))+0.0693237*m+-9.30082e-05*m*m+3.92305e-08*m*m*m)); sigmaCB_high.setConstant(kTRUE);
-	  meanCB.setVal(((-0.0271076+(-6.7769e-05-0.0010161)*400+(-1.69422e-07-7.82239e-08)*pow(400,2)+(-4.23556e-10--6.91491e-10)*pow(400,3)+-1.05889e-12*pow(400,4)+-2.64723e-15*pow(400,5))+0.0010161*m+7.82239e-08*m*m+-6.91491e-10*m*m*m)); meanCB.setConstant(kTRUE);
-	  alphaCB_1.setVal(((0.215028+(0.00053757-0.00923058)*400+(1.34393e-06--1.7239e-05)*pow(400,2)+(3.35981e-09-9.14737e-09)*pow(400,3)+8.39954e-12*pow(400,4)+2.09988e-14*pow(400,5))+0.00923058*m+-1.7239e-05*m*m+9.14737e-09*m*m*m)); alphaCB_1.setConstant(kTRUE);
-	  alphaCB_2.setVal(((0.266434+(0.000666085--0.0110694)*400+(1.66521e-06-1.08711e-05)*pow(400,2)+(4.16304e-09--3.8998e-09)*pow(400,3)+1.04076e-11*pow(400,4)+2.60189e-14*pow(400,5))+-0.0110694*m+1.08711e-05*m*m+-3.8998e-09*m*m*m)); alphaCB_2.setConstant(kTRUE);
-	}
-      } //8TeV
+      }
+    }
 
+    // Fixing the values to the one extracted from the C'^2 = 0.2 case (extracted from VBF case)
+    if (!useggH && useVBF && setParSeed){ 
+      if (sqrts==8){
+	    if (channel==1){
+  	      // Fitted on the C0.2
+              sigmaCB_high.setVal(12.5956+-0.0470057*m+6.83473e-05*m*m+2.51305e-08*m*m*m+-1.06192e-10*m*m*m*m+5.28732e-14*m*m*m*m*m);
+              meanCB.setVal(-3.78949+0.010069*m+2.0648e-06*m*m+-1.19493e-08*m*m*m+-1.04701e-11*m*m*m*m+1.43896e-14*m*m*m*m*m);
+              alphaCB_1.setVal(-0.331026+0.00794445*m+-1.38703e-05*m*m+2.74076e-09*m*m*m+1.2858e-11*m*m*m*m+-8.7033e-15*m*m*m*m*m);
+              alphaCB_2.setVal(-0.948574+0.0103706*m+-1.39029e-05*m*m+-1.13422e-09*m*m*m+9.85803e-12*m*m*m*m+-3.33141e-15*m*m*m*m*m);
+        }
+      }
+      if (sqrts==8){
+	    if (channel==2){
+  	      // Fitted on the C0.2
+              sigmaCB_high.setVal(-10.0184+0.0697895*m+-9.60631e-05*m*m+-2.45528e-08*m*m*m+1.53632e-10*m*m*m*m+-8.91256e-14*m*m*m*m*m);
+              meanCB.setVal(-2.1427+0.0052267*m+1.29187e-06*m*m+-5.58547e-09*m*m*m+-4.95629e-12*m*m*m*m+6.37905e-15*m*m*m*m*m);
+              alphaCB_1.setVal(-3.18761+0.0244051*m+-3.81919e-05*m*m+-1.22216e-08*m*m*m+6.95187e-11*m*m*m*m+-3.99139e-14*m*m*m*m*m);
+              alphaCB_2.setVal(-3.11972+0.0246487*m+-3.82539e-05*m*m+-1.30719e-08*m*m*m+6.87467e-11*m*m*m*m+-3.85156e-14*m*m*m*m*m);
+        }
+      }
+      if (sqrts==8){
+	    if (channel==3){
+  	      // Fitted on the C0.2
+              sigmaCB_high.setVal(20.4808+-0.0935922*m+0.000149709*m*m+3.27243e-08*m*m*m+-2.16736e-10*m*m*m*m+1.13581e-13*m*m*m*m*m);
+              meanCB.setVal(0.135166+-0.000940303*m+-2.9491e-09*m*m+1.79791e-09*m*m*m+1.70383e-12*m*m*m*m+-1.96563e-15*m*m*m*m*m);
+              alphaCB_1.setVal(3.26293+-0.0113857*m+1.59068e-05*m*m+3.53184e-09*m*m*m+-2.27015e-11*m*m*m*m+1.18839e-14*m*m*m*m*m);
+              alphaCB_2.setVal(7.20668+-0.0307051*m+4.1712e-05*m*m+1.16758e-08*m*m*m+-6.05437e-11*m*m*m*m+3.10839e-14*m*m*m*m*m);
+        }
+      }
+      if (sqrts==7){
+	    if (channel==1){
+  	      // Fitted on the C0.2
+              sigmaCB_high.setVal(29.7087+-0.14648*m+0.000232374*m*m+5.19291e-08*m*m*m+-3.46633e-10*m*m*m*m+1.85597e-13*m*m*m*m*m);
+              meanCB.setVal(-2.00322+0.00524247*m+8.5533e-07*m*m+-6.15464e-09*m*m*m+-4.92105e-12*m*m*m*m+7.54849e-15*m*m*m*m*m);
+              alphaCB_1.setVal(2.19357+-0.00549671*m+6.63663e-06*m*m+4.56663e-09*m*m*m+-1.58807e-11*m*m*m*m+8.514e-15*m*m*m*m*m);
+              alphaCB_2.setVal(7.65399+-0.0323573*m+4.23417e-05*m*m+1.59591e-08*m*m*m+-6.72994e-11*m*m*m*m+3.41317e-14*m*m*m*m*m);
+        }
+      }
+      if (sqrts==7){
+	    if (channel==2){
+  	      // Fitted on the C0.2
+              sigmaCB_high.setVal(14.2734+-0.0639824*m+0.000112014*m*m+1.84252e-08*m*m*m+-1.8111e-10*m*m*m*m+1.08221e-13*m*m*m*m*m);
+              meanCB.setVal(-1.20102+0.00270735*m+1.05305e-06*m*m+-2.86439e-09*m*m*m+-3.06745e-12*m*m*m*m+3.48754e-15*m*m*m*m*m);
+              alphaCB_1.setVal(0.334235+0.00567805*m+-1.29738e-05*m*m+5.36553e-09*m*m*m+1.11176e-11*m*m*m*m+-8.79236e-15*m*m*m*m*m);
+              alphaCB_2.setVal(0.67474+0.00505365*m+-1.33184e-05*m*m+5.83472e-09*m*m*m+1.17403e-11*m*m*m*m+-9.24834e-15*m*m*m*m*m);
+        }
+      }
+      if (sqrts==7){
+	    if (channel==3){
+  	      // Fitted on the C0.2
+              sigmaCB_high.setVal(2.0798+-0.00293226*m+3.09867e-05*m*m+-1.77069e-08*m*m*m+-3.10432e-11*m*m*m*m+2.46706e-14*m*m*m*m*m);
+              meanCB.setVal(-9.8286+0.048186*m+-6.31769e-05*m*m+-2.39942e-08*m*m*m+9.55702e-11*m*m*m*m+-4.61232e-14*m*m*m*m*m);
+              alphaCB_1.setVal(4.31033+-0.0168256*m+2.65514e-05*m*m+-5.65718e-09*m*m*m+-1.92652e-11*m*m*m*m+1.1468e-14*m*m*m*m*m);
+              alphaCB_2.setVal(4.39198+-0.0166661*m+2.61775e-05*m*m+-6.16957e-09*m*m*m+-1.92985e-11*m*m*m*m+1.20878e-14*m*m*m*m*m);
+        }
+      }
+    }
+
+
+    if (fixResPars){
+      sigmaCB_high.setConstant(kTRUE);
+      meanCB.setConstant(kTRUE);	     
+      alphaCB_1.setConstant(kTRUE);   
+      alphaCB_2.setConstant(kTRUE);   
+      nCB_1.setConstant(kTRUE);   
+      nCB_2.setConstant(kTRUE);         
     }
 
 
@@ -469,12 +571,18 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
 
     //Convolute theoretical shape and resolution
     RooFFTConvPdf *sigPDF;
-    if(masses[i] < 399.) sigPDF = new RooFFTConvPdf("sigPDF","sigPDF",ZZMass,SignalTheor,massRes);
-    else sigPDF = new RooFFTConvPdf("sigPDF","sigPDF",ZZMass,SignalTheor,massResH);
+    if(masses[i] < 399.) {
+      sigPDF = new RooFFTConvPdf("sigPDF","sigPDF",ZZMass,*SignalTheor,massRes);
+    }
+    else{
+      sigPDF = new RooFFTConvPdf("sigPDF","sigPDF",ZZMass,*SignalTheor,massResH);
+    }
     sigPDF->setBufferFraction(0.2);
 
     RooPlot *xplot = ZZMass.frame();
+    RooPlot *xplot_z = ZZMass.frame();
     TCanvas *canv = new TCanvas("canv","canv",1200,800);
+    TCanvas *canv_z = new TCanvas("canv_z","canv_z",1200,800);
 
     string tmp_plotFileTitle;
     tmp_plotFileTitle.insert(0,outfile);
@@ -511,6 +619,7 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
     massfits = new TFile(rootTitle + ".root","RECREATE");
     
     RooFitResult *fitRes = sigPDF->fitTo(*hist,Save(1), SumW2Error(kTRUE), Range("fitRange"));
+    // RooFitResult *fitRes = sigPDF->chi2FitTo(*hist,Save(1), SumW2Error(kTRUE), Range("fitRange"), Strategy(2));
 
 //     a_fitEDM[i] = fitRes->edm();
 //     a_fitCovQual[i] = fitRes->covQual();
@@ -546,14 +655,32 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
 
     //Plot in the figures directory
     hist->plotOn(xplot);
-    sigPDF->plotOn(xplot);
-    // sigPDF->paramOn(xplot);
+    sigPDF->plotOn(xplot,Range("plotRange"));
     canv->cd();
     xplot->Draw();
 
+    hist->plotOn(xplot_z);
+    sigPDF->plotOn(xplot_z,Range("fitRange"));
+    canv_z->cd();
+    xplot_z->Draw();
+
     TString plotFileTitleTS(plotFileTitle.c_str());
     TString plotgif = plotFileTitleTS + ""+appendStr+".png";
+    TString plotpdf = plotFileTitleTS + ""+appendStr+".pdf";
+    char baseWWW[192];
+    sprintf(baseWWW,webDir,sqrts);
+    TString TS_baseWWW(baseWWW);
+    TS_baseWWW+=cprimeTS;
+
     canv->SaveAs(plotgif);
+    canv->SaveAs(plotpdf);
+    gSystem->Exec("cp "+plotgif+" "+TS_baseWWW);
+    plotgif.ReplaceAll(".png","_z.png");
+    plotpdf.ReplaceAll(".pdf","_z.pdf");
+    // gSystem->Exec("cp "+plotgif+" "+TS_baseWWW);
+    canv_z->SaveAs(plotgif);
+    canv_z->SaveAs(plotpdf);
+
     massfits->cd();
     set->Write("MassData");
     parameters = new TH1F("","",8,0,8);
@@ -589,6 +716,22 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   TGraph* gr_nCB_2     = new TGraph(nPoints, masses, a_nCB_2);
   TGraph* gr_Gamma   = new TGraph(nPoints, masses, a_Gamma);
 
+//   TGraphErrors* gr_meanCB  = new TGraphErrors(nPoints, masses, a_meanCB, masses_err, a_meanCB_err);
+//   TGraphErrors* gr_sigmaCB = new TGraphErrors(nPoints, masses, a_sigmaCB, masses_err, a_sigmaCB_err);
+//   TGraphErrors* gr_alphaCB_1 = new TGraphErrors(nPoints, masses, a_alphaCB_1, masses_err, a_alphaCB_1_err);
+//   TGraphErrors* gr_nCB_1     = new TGraphErrors(nPoints, masses, a_nCB_1, masses_err, a_nCB_1_err);
+//   TGraphErrors* gr_alphaCB_2 = new TGraphErrors(nPoints, masses, a_alphaCB_2, masses_err, a_alphaCB_2_err);
+//   TGraphErrors* gr_nCB_2     = new TGraphErrors(nPoints, masses, a_nCB_2, masses_err, a_nCB_2_err);
+//   TGraphErrors* gr_Gamma   = new TGraphErrors(nPoints, masses, a_Gamma, masses_err, a_Gamma_err);
+
+  gr_meanCB ->SetMarkerStyle(20);
+  gr_sigmaCB->SetMarkerStyle(20);
+  gr_alphaCB_1->SetMarkerStyle(20);
+  gr_nCB_1->SetMarkerStyle(20);
+  gr_alphaCB_2->SetMarkerStyle(20);
+  gr_nCB_2->SetMarkerStyle(20);
+  gr_Gamma->SetMarkerStyle(20);  
+  
   // TF1 *paramfit = new TF1("paramfit","(x<400)*([0]+[1]*x+[2]*x*x+[3]*x*x*x+[4]*x*x*x*x+[5]*x*x*x*x*x)+(x>=400)*(([0]+([1]-[6])*400+([2]-[7])*pow(400,2)+([3]-[8])*pow(400,3)+[4]*pow(400,4)+[5]*pow(400,5))+[6]*x+[7]*x*x+[8]*x*x*x)",115,1000);
   // TF1 *paramfit = new TF1("paramfit","(([0]+([1]-[6])*400+([2]-[7])*pow(400,2)+([3]-[8])*pow(400,3)+[4]*pow(400,4)+[5]*pow(400,5))+[6]*x+[7]*x*x+[8]*x*x*x)",400,1000);
   TF1 *paramfit = new TF1("paramfit","[0]+[1]*x+[2]*x*x+[3]*x*x*x+[4]*x*x*x*x+[5]*x*x*x*x*x",400,1000);
@@ -598,23 +741,23 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   cout<<"#################################"<<endl;
   cout<<"Fitting the trend of the mean of the CB"<<endl;
   cout<<"#################################"<<endl;
-  gr_meanCB->Fit("paramfit");
+  gr_meanCB->Fit("paramfit","MER");
   cout<<"#################################"<<endl;
   cout<<"Fitting the trend of the sigma of the CB"<<endl;
   cout<<"#################################"<<endl;
-  gr_sigmaCB->Fit("paramfit");
+  gr_sigmaCB->Fit("paramfit","MER");
   cout<<"#################################"<<endl;
   cout<<"Fitting the trend of the alpha1 (R) of the CB"<<endl;
   cout<<"#################################"<<endl;
-  gr_alphaCB_1->Fit("paramfit");
+  gr_alphaCB_1->Fit("paramfit","MER");
   cout<<"#################################"<<endl;
   cout<<"Fitting the trend of the N1 (R) of the CB"<<endl;
   cout<<"#################################"<<endl;
-  gr_nCB_1->Fit("paramfit");
+  gr_nCB_1->Fit("paramfit","MER");
   cout<<"#################################"<<endl;
   cout<<"Fitting the trend of the alpha2 (L) of the CB"<<endl;
   cout<<"#################################"<<endl;
-  gr_alphaCB_2->Fit("paramfit");
+  gr_alphaCB_2->Fit("paramfit","MER");
   cout<<"#################################"<<endl;
   cout<<"Fitting the trend of the N2 (L) of the CB"<<endl;
   cout<<"#################################"<<endl;
@@ -633,14 +776,13 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   TF1 *fit_Gamma   = gr_Gamma->GetListOfFunctions()->First();
 
   
-  (*interpCode) << "              sigmaCB_high.setVal("<<fit_sigmaCB->GetParameter(0)<<"+"<<fit_sigmaCB->GetParameter(1)<<"*m+"<<fit_sigmaCB->GetParameter(2)<<"*m*m+"<<fit_sigmaCB->GetParameter(3)<<"*m*m*m)"<<fit_sigmaCB->GetParameter(4)<<"*m*m*m*m)"<<fit_sigmaCB->GetParameter(5)<<"*m*m*m*m*m)); sigmaCB_high.setConstant(kTRUE);"<<endl;
-  (*interpCode) << "              meanCB.setVal("<<fit_meanCB->GetParameter(0)<<"+"<<fit_meanCB->GetParameter(1)<<"*m+"<<fit_meanCB->GetParameter(2)<<"*m*m+"<<fit_meanCB->GetParameter(3)<<"*m*m*m)"<<fit_meanCB->GetParameter(4)<<"*m*m*m*m)"<<fit_meanCB->GetParameter(5)<<"*m*m*m*m*m)"<<"); meanCB.setConstant(kTRUE);"<<endl;
-  (*interpCode) << "              alphaCB_1.setVal("<<fit_alphaCB_1->GetParameter(0)<<"+"<<fit_alphaCB_1->GetParameter(1)<<"*m+"<<fit_alphaCB_1->GetParameter(2)<<"*m*m+"<<fit_alphaCB_1->GetParameter(3)<<"*m*m*m)"<<fit_alphaCB_1->GetParameter(4)<<"*m*m*m*m)"<<fit_alphaCB_1->GetParameter(5)<<"*m*m*m*m*m)"<<"); alphaCB_1.setConstant(kTRUE);"<<endl;
-  (*interpCode) << "              alphaCB_2.setVal("<<fit_alphaCB_2->GetParameter(0)<<"+"<<fit_alphaCB_2->GetParameter(1)<<"*m+"<<fit_alphaCB_2->GetParameter(2)<<"*m*m+"<<fit_alphaCB_2->GetParameter(3)<<"*m*m*m)"<<fit_alphaCB_2->GetParameter(4)<<"*m*m*m*m)"<<fit_alphaCB_2->GetParameter(5)<<"*m*m*m*m*m)"<<"); alphaCB_2.setConstant(kTRUE);"<<endl;
+  (*interpCode) << "              sigmaCB_high.setVal("<<fit_sigmaCB->GetParameter(0)<<"+"<<fit_sigmaCB->GetParameter(1)<<"*m+"<<fit_sigmaCB->GetParameter(2)<<"*m*m+"<<fit_sigmaCB->GetParameter(3)<<"*m*m*m+"<<fit_sigmaCB->GetParameter(4)<<"*m*m*m*m+"<<fit_sigmaCB->GetParameter(5)<<"*m*m*m*m*m);"<<endl;
+  (*interpCode) << "              meanCB.setVal("<<fit_meanCB->GetParameter(0)<<"+"<<fit_meanCB->GetParameter(1)<<"*m+"<<fit_meanCB->GetParameter(2)<<"*m*m+"<<fit_meanCB->GetParameter(3)<<"*m*m*m+"<<fit_meanCB->GetParameter(4)<<"*m*m*m*m+"<<fit_meanCB->GetParameter(5)<<"*m*m*m*m*m)"<<";"<<endl;
+  (*interpCode) << "              alphaCB_1.setVal("<<fit_alphaCB_1->GetParameter(0)<<"+"<<fit_alphaCB_1->GetParameter(1)<<"*m+"<<fit_alphaCB_1->GetParameter(2)<<"*m*m+"<<fit_alphaCB_1->GetParameter(3)<<"*m*m*m+"<<fit_alphaCB_1->GetParameter(4)<<"*m*m*m*m+"<<fit_alphaCB_1->GetParameter(5)<<"*m*m*m*m*m)"<<";"<<endl;
+  (*interpCode) << "              alphaCB_2.setVal("<<fit_alphaCB_2->GetParameter(0)<<"+"<<fit_alphaCB_2->GetParameter(1)<<"*m+"<<fit_alphaCB_2->GetParameter(2)<<"*m*m+"<<fit_alphaCB_2->GetParameter(3)<<"*m*m*m+"<<fit_alphaCB_2->GetParameter(4)<<"*m*m*m*m+"<<fit_alphaCB_2->GetParameter(5)<<"*m*m*m*m*m)"<<";"<<endl;
 
   (*interpCode) << "        }" << endl;
   (*interpCode) << "      }" << endl;
-  (*interpCode) << "    }" << endl;
 
   gr_meanCB->SetTitle("Mean value of the DCB function");
   gr_sigmaCB->SetTitle("Sigma of the DCB function");
@@ -658,16 +800,26 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
 //   gr_nCB_2->SetTitle("");
 //   gr_Gamma->SetTitle("");
 
-  TCanvas *canv2 = new TCanvas("canv2","canv2",1600,800);
-  canv2->Divide(4,2);
+//   TCanvas *canv2 = new TCanvas("canv2","canv2",1600,800);
+//   canv2->Divide(4,2);
 
-  canv2->cd(1); gr_meanCB->Draw("A*");  fit_meanCB->Draw("SAME");
-  canv2->cd(2); gr_sigmaCB->Draw("A*"); fit_sigmaCB->Draw("SAME");
-  canv2->cd(3); gr_alphaCB_1->Draw("A*"); fit_alphaCB_1->Draw("SAME");
-  canv2->cd(4); gr_nCB_1->Draw("A*");     fit_nCB_1->Draw("SAME");
-  canv2->cd(5); gr_alphaCB_2->Draw("A*"); fit_alphaCB_2->Draw("SAME");
-  canv2->cd(6); gr_nCB_2->Draw("A*");     fit_nCB_2->Draw("SAME");
-  canv2->cd(7); gr_Gamma->Draw("A*");   fit_Gamma->Draw("SAME");
+//   canv2->cd(1); gr_meanCB->Draw("A*");  fit_meanCB->Draw("SAME");
+//   canv2->cd(2); gr_sigmaCB->Draw("A*"); fit_sigmaCB->Draw("SAME");
+//   canv2->cd(3); gr_alphaCB_1->Draw("A*"); fit_alphaCB_1->Draw("SAME");
+//   canv2->cd(4); gr_nCB_1->Draw("A*");     fit_nCB_1->Draw("SAME");
+//   canv2->cd(5); gr_alphaCB_2->Draw("A*"); fit_alphaCB_2->Draw("SAME");
+//   canv2->cd(6); gr_nCB_2->Draw("A*");     fit_nCB_2->Draw("SAME");
+//   canv2->cd(7); gr_Gamma->Draw("A*");   fit_Gamma->Draw("SAME");
+
+  TCanvas *canv2 = new TCanvas("canv2_"+TString(schannel)+"_"+ssqrts,"canv2_"+TString(schannel)+"_"+ssqrts,1600,400);
+  canv2->Divide(4);
+
+  canv2->cd(1); gr_meanCB->Draw("AP");  fit_meanCB->Draw("SAME");
+  canv2->cd(2); gr_sigmaCB->Draw("AP"); fit_sigmaCB->Draw("SAME");
+  canv2->cd(3); gr_alphaCB_1->Draw("AP"); fit_alphaCB_1->Draw("SAME");
+  canv2->cd(4); gr_alphaCB_2->Draw("AP"); fit_alphaCB_2->Draw("SAME");
+
+
   gr_meanCB->GetXaxis()->SetTitle("m_{H} (GeV)");
   gr_sigmaCB->GetXaxis()->SetTitle("m_{H} (GeV)");
   gr_alphaCB_1->GetXaxis()->SetTitle("m_{H} (GeV)");
@@ -675,6 +827,11 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   gr_nCB_1->GetXaxis()->SetTitle("m_{H} (GeV)");
   gr_nCB_2->GetXaxis()->SetTitle("m_{H} (GeV)");
   gr_Gamma->GetXaxis()->SetTitle("m_{H} (GeV)");
+
+  gr_meanCB->GetYaxis()->SetRangeUser(-3,3);
+  gr_sigmaCB->GetYaxis()->SetRangeUser(2,12);
+  gr_alphaCB_1->GetYaxis()->SetRangeUser(0,3);
+  gr_alphaCB_2->GetYaxis()->SetRangeUser(0,3);
 
   string tmp_paramPlotFileTitle;
   tmp_paramPlotFileTitle.insert(0,outfile);
@@ -686,15 +843,22 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   if (useVBF) paramPlotFileTitle+="_VBF";
   if (useVH) paramPlotFileTitle+="_VH";
   string paramgif=paramPlotFileTitle;
+  string parampdf=paramPlotFileTitle;
   TString paramgifTS(paramPlotFileTitle.c_str());
+  TString parampdfTS(paramPlotFileTitle.c_str());
   if (usedijet && !usenondijet){
     paramgifTS+="_0"+appendStr+".png";
+    parampdfTS+="_0"+appendStr+".pdf";
   }else if (usenondijet && !usedijet){
     paramgifTS+="_1"+appendStr+".png";
+    parampdfTS+="_1"+appendStr+".pdf";
   }else if (usenondijet && usedijet){
     paramgifTS+="deriv5"+appendStr+".png";
+    parampdfTS+="deriv5"+appendStr+".pdf";
   }
   canv2->SaveAs(paramgifTS);
+  canv2->SaveAs(parampdfTS);
+  if (copyToWeb) gSystem->Exec("cp "+paramgifTS+" "+TS_baseWWW);
 
   char tmp_outCardName[200];
   sprintf(tmp_outCardName,"%iTeV_",sqrts);
@@ -715,25 +879,16 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   if (usedijet && usenondijet){
     ofsCard.open(outCardName.c_str(),fstream::out);
     ofsCard << "## signal functions --- no spaces! ##" << endl;
-    // ofsCard << "HighMasssignalShape n_CB " << fit_nCB_1->GetParameter(0) << "+(" << fit_nCB_1->GetParameter(1) << "*@0)+(" << fit_nCB_1->GetParameter(2) << "*@0*@0)+(" << fit_nCB_1->GetParameter(3) << "*@0*@0*@0)+(" << fit_nCB_1->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_nCB_1->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
     ofsCard << "HighMasssignalShape n_CB 5"<< endl;
     ofsCard << "HighMasssignalShape alpha_CB " << fit_alphaCB_1->GetParameter(0) << "+(" << fit_alphaCB_1->GetParameter(1) << "*@0)+(" << fit_alphaCB_1->GetParameter(2) << "*@0*@0)+(" << fit_alphaCB_1->GetParameter(3) << "*@0*@0*@0)+(" << fit_alphaCB_1->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_alphaCB_1->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
     ofsCard << "HighMasssignalShape n2_CB 20" << endl;
     ofsCard << "HighMasssignalShape alpha2_CB " << fit_alphaCB_2->GetParameter(0) << "+(" << fit_alphaCB_2->GetParameter(1) << "*@0)+(" << fit_alphaCB_2->GetParameter(2) << "*@0*@0)+(" << fit_alphaCB_2->GetParameter(3) << "*@0*@0*@0)+(" << fit_alphaCB_2->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_alphaCB_2->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
     ofsCard << "HighMasssignalShape mean_CB " << fit_meanCB->GetParameter(0) << "+(" << fit_meanCB->GetParameter(1) << "*@0)+(" << fit_meanCB->GetParameter(2) << "*@0*@0)+(" << fit_meanCB->GetParameter(3) << "*@0*@0*@0)+(" << fit_meanCB->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_meanCB->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
     ofsCard << "HighMasssignalShape sigma_CB " << fit_sigmaCB->GetParameter(0) << "+(" << fit_sigmaCB->GetParameter(1) << "*@0)+(" << fit_sigmaCB->GetParameter(2) << "*@0*@0)+(" << fit_sigmaCB->GetParameter(3) << "*@0*@0*@0)+(" << fit_sigmaCB->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_sigmaCB->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
-//     ofsCard << "HighMasssignalShape n_CB " << highn1 << "+(" << fit_nCB_1->GetParameter(6) << "*@0)+(" << fit_nCB_1->GetParameter(7) << "*@0*@0)+(" << fit_nCB_1->GetParameter(8) << "*@0*@0*@0)" <<endl;
-//     ofsCard << "HighMasssignalShape alpha_CB " << higha1 << "+(" << fit_alphaCB_1->GetParameter(6) << "*@0)+(" << fit_alphaCB_1->GetParameter(7) << "*@0*@0)+(" << fit_alphaCB_1->GetParameter(8) << "*@0*@0*@0)" << endl;
-//     ofsCard << "HighMasssignalShape n2_CB " << fit_nCB_2->GetParameter(0) << endl;
-//     ofsCard << "HighMasssignalShape alpha2_CB " << higha2 << "+(" << fit_alphaCB_2->GetParameter(6) << "*@0)+(" << fit_alphaCB_2->GetParameter(7) << "*@0*@0)+(" << fit_alphaCB_2->GetParameter(8) << "*@0*@0*@0)" << endl;
-//     ofsCard << "HighMasssignalShape mean_CB " << highmean << "+(" << fit_meanCB->GetParameter(6) << "*@0)+(" << fit_meanCB->GetParameter(7) << "*@0*@0)+(" << fit_meanCB->GetParameter(8) << "*@0*@0*@0)" << endl;
-//     ofsCard << "HighMasssignalShape sigma_CB " << highsigma << "+(" << fit_sigmaCB->GetParameter(6) << "*@0)+(" << fit_sigmaCB->GetParameter(7) << "*@0*@0)+(" << fit_sigmaCB->GetParameter(8) << "*@0*@0*@0)" << endl;
-//     ofsCard << "HighMasssignalShape gamma_BW " << highgamma1 << "+(" << highgamma2 << "*@0)+(" << fit_Gamma->GetParameter(6) << "*@0*@0)+(" << fit_Gamma->GetParameter(7) << "*@0*@0*@0)" << endl;
     ofsCard << endl;
 
   }
 
-  fPar->Close();
 
   return;
 }
