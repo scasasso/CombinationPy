@@ -2,7 +2,7 @@
 
 echo "Building Package..."
 
-cd include
+cd include_new
 
 rm *.so *.d
 echo HiggsCSandWidth
