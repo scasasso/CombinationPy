@@ -9,6 +9,7 @@ import ROOT
 from array import array
 from systematicsClass import *
 from inputReader import *
+from gamma_H_HTO import gamma_H_HTO
 
 ## ------------------------------------
 ##  card and workspace class
@@ -116,8 +117,9 @@ class datacardClass:
             print "[makeCardsWorkspaces]: This point of the parameter space is not covered in the search: Gamma/Gamma_SM = ",round(float(theCSquared/(1-theBRnew)),2)," > 1."
             exit(1)
 
+
         ## --------------- SETTINGS AND DECLARATIONS --------------- ##
-        DEBUG = False
+        DEBUG = True
         self.mH = theMH
         self.lumi = theInputs['lumi']
         self.sqrts = theInputs['sqrts']
@@ -157,36 +159,13 @@ class datacardClass:
         #BSM parameters
         self.brnew_HM_BSM    = theBRnew
         self.csquared_HM_BSM = theCSquared
-        self.r_HM_BSM        = -999.9
-        self.gamma_HM_BSM    = -999.9
-        self.alpha_HM_BSM    = -999.9
-        self.beta_HM_BSM     = -999.9
-        self.delta_HM_BSM    = -999.9
-        self.k_HM_BSM        = -999.9
-        self.totWidthSF      = -999.9
-        self.totXsSF         = -999.9
 
         if HMP_flag:
             self.brnew_HM_BSM    = theBRnew
-            self.csquared_HM_BSM = theCSquared
-            self.r_HM_BSM        = theInputs['h_r_theoParGGH'].Interpolate(theMH,theCSquared)
-            self.gamma_HM_BSM    = theInputs['h_Gamma_theoParGGH'].Interpolate(theMH,theCSquared)
-            self.alpha_HM_BSM    = theInputs['h_Alpha_theoParGGH'].Interpolate(theMH,theCSquared) 
-            self.beta_HM_BSM     = theInputs['h_Beta_theoParGGH'].Interpolate(theMH,theCSquared)
-            self.delta_HM_BSM    = theInputs['h_Delta_theoParGGH'].Interpolate(theMH,theCSquared)
-            self.k_HM_BSM        = 0.25
+            self.csquared_HM_BSM = theCSquared            
             self.totWidthSF      = self.csquared_HM_BSM/(1-self.brnew_HM_BSM)
             self.totXsSF         = self.csquared_HM_BSM*(1-self.brnew_HM_BSM)
             
-
-        if DEBUG and HMP_flag:
-            print "Debugging theoretical shape parameters for the HMP:"
-            print "  r_HM_BSM     = ",self.r_HM_BSM
-            print "  gamma_HM_BSM = ",self.gamma_HM_BSM
-            print "  alpha_HM_BSM = ",self.alpha_HM_BSM
-            print "  beta_HM_BSM  = ",self.beta_HM_BSM
-            print "  delta_HM_BSM = ",self.delta_HM_BSM
-
         
         ## ---------------- SET PLOTTING STYLE ---------------- ## 
         ROOT.setTDRStyle(True)
@@ -204,13 +183,15 @@ class datacardClass:
         if(self.widthHVal < 0.12):
             self.bUseCBnoConvolution = True
         self.isHighMass = False
-        if self.mH >= 390:
+        if self.mH > 399.:
             if theInputs['useHighMassReweightedShapes']:
                 self.isHighMass = True
             else: print "useHighMassReweightedShapes set to FALSE, using non-reweighted shapes!"
 
             
         print "width: ",self.widthHVal
+
+        self.gamma_HM_BSM = gamma_H_HTO(self.mH)
         
         self.windowVal = max( self.widthHVal, 1.0)
         lowside = 100.0
@@ -235,12 +216,10 @@ class datacardClass:
         if DEBUG:
             print "--> DEBUGGING MASS WINDOWS"
             print "standard windows: low_M = ",self.low_M,", high_M = ",self.high_M
-#         print "low_M = ",self.mH," - (",self.mH," - ",self.low_M,")*",self.inputsHM_BSM['csquared_shape_HM_BSM']
-#         print "high_M = ",self.mH," + (",self.high_M," - ",self.mH,")*",self.inputsHM_BSM['csquared_shape_HM_BSM']
 
         windowRange = self.high_M-self.low_M
         
-        if HMP_flag:
+        if HMP_flag and self.mH>399.:
             normRangeR = 3.
             if self.mH<401.: normRangeR = 7.2
             elif self.mH<451.: normRangeR = 6.3
@@ -255,13 +234,12 @@ class datacardClass:
             elif self.mH<901.: normRangeR = 1.3
             elif self.mH<951.: normRangeR = 1.2
             else: normRangeR = 1.
-            windowRange = windowRange*self.totWidthSF
+            windowRange *= self.totWidthSF
             self.high_M = self.mH + normRangeR*self.gamma_HM_BSM*self.totWidthSF
             self.low_M  = max(260.,self.high_M - windowRange)
             
 
-        if DEBUG:
-            print "scaled mass windows: low_M = ",self.low_M,", high_M = ",self.high_M
+        if DEBUG: print "scaled mass windows: low_M = ",self.low_M,", high_M = ",self.high_M
        
         if (self.channel == self.ID_4mu): self.appendName = '4mu'
         elif (self.channel == self.ID_4e): self.appendName = '4e'
@@ -551,22 +529,17 @@ class datacardClass:
             CMS_zz4l_massErr = ROOT.RooFormulaVar("CMS_zz4l_massErr","@0*@1*TMath::Sqrt((1+@2)*(1+@3))",ROOT.RooArgList(CMS_zz4l_mass,RelErr,CMS_zz4l_sigma_m_sig,CMS_zz4l_sigma_e_sig))
         # end bIncludingError
 
-        ## ----------------- DEFINE ROOREALVARS FOR BSM CASE ------------------ ##
+#         ## ----------------- DEFINE ROOREALVARS FOR BSM CASE ------------------ ##
         if HMP_flag:
             print "Defining RooRealVars for the parameters of the shape (High Mass paper)"
             rrv_brnew_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_brnew_BSM","CMS_zz4l_brnew_BSM",self.brnew_HM_BSM)
             rrv_csquared_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_csquared_BSM","CMS_zz4l_csquared_BSM",self.csquared_HM_BSM)
-            rrv_r_shape_HM_BSM = ROOT.RooRealVar("interf_ggH_BSM","CMS_zz4l_r_BSM",self.r_HM_BSM)
-            rrv_gamma_BW_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_gamma_BW_BSM","CMS_zz4l_gamma_BW_BSM",self.gamma_HM_BSM)
-            rrv_alpha_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_alpha_BSM","CMS_zz4l_alpha_BSM",self.alpha_HM_BSM)
-            rrv_beta_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_beta_BSM","CMS_zz4l_beta_BSM",self.beta_HM_BSM)
-            rrv_delta_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_delta_BSM","CMS_zz4l_delta_BSM",self.delta_HM_BSM)
-            rrv_k_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_k_BSM","CMS_zz4l_k_BSM",self.k_HM_BSM)
+            rrv_intStr_shape_HM_BSM = ROOT.RooRealVar("interf_ggH","CMS_zz4l_r_BSM",1.)
 
         
         ## --------------------- SHAPE FUNCTIONS ---------------------- ##
         if DEBUG:
-            print "--> DEBUGGING RESOLUTION SHAPE PARAMETERS FOR MASS = <--",self.mH,", C'^2 = ",self.k_prime_squared_ewksing," BR_new = ",self.br_new_ewksing
+            print "--> DEBUGGING RESOLUTION SHAPE PARAMETERS FOR MASS = <--",self.mH,", C'^2 = ",self.csquared_HM_BSM," BR_new = ",self.brnew_HM_BSM
             print "n_CB ", rfv_n_CB.getVal()
             print "alpha_CB ", rfv_alpha_CB.getVal()
             print "n2_CB ", rfv_n2_CB.getVal()
@@ -574,64 +547,75 @@ class datacardClass:
             print "mean_CB ", rfv_mean_CB.getVal()
             print "sigma_CB ", rfv_sigma_CB.getVal()
             print "gamma_BW ", rfv_gamma_BW.getVal()
-            if HMP_flag: print "gamma_BW (really used)",rrv_gamma_BW_shape_HM_BSM.getVal()
-            
 
     
         signalCB_ggH = ROOT.RooDoubleCB("signalCB_ggH","signalCB_ggH",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
         #Low mass pdf
-        signalBW_ggH = ROOT.RooRelBWUFParam("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale)
+        signalBW_ggH = ROOT.RooRelBWUFParam("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
         sig_ggH =  ROOT.RooFFTConvPdf("sig_ggH","BW (X) CB",CMS_zz4l_mass,signalBW_ggH,signalCB_ggH, 2)
         #High mass pdf
-        if not (HMP_flag and self.mH>399.): signalBW_ggH_HM = ROOT.RooRelBWHighMass("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-#         else: signalBW_ggH_HM = ROOT.RooSigPlusInt("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_ggH_HM = ROOT.RooBWHighMassGGH("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,self.is8TeV)
+        if not (HMP_flag and self.mH>399.):
+            signalBW_ggH_HM = ROOT.RooRelBWHighMass("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
+            #         else: signalBW_ggH_HM = ROOT.RooSigPlusInt("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
+        else: signalBW_ggH_HM = ROOT.RooBWHighMassGGH("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
 
         sig_ggH_HM =  ROOT.RooFFTConvPdf("sig_ggH","BW (X) CB",CMS_zz4l_mass,signalBW_ggH_HM,signalCB_ggH, 2)
   
         
         signalCB_VBF = ROOT.RooDoubleCB("signalCB_VBF","signalCB_VBF",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
         #Low mass pdf
-        signalBW_VBF = ROOT.RooRelBWUFParam("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale)
+        signalBW_VBF = ROOT.RooRelBWUFParam("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
         sig_VBF = ROOT.RooFFTConvPdf("sig_VBF","BW (X) CB",CMS_zz4l_mass,signalBW_VBF,signalCB_VBF, 2)
         #High mass pdf
-        if not (HMP_flag and self.mH>399.): signalBW_VBF_HM = ROOT.RooRelBWHighMass("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-#         else: signalBW_VBF_HM = ROOT.RooSigPlusInt("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_VBF_HM = ROOT.RooBWHighMassVBF("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,self.is8TeV)        
-        sig_VBF_HM = ROOT.RooFFTConvPdf("sig_VBF","BW (X) CB",CMS_zz4l_mass,signalBW_VBF_HM,signalCB_VBF, 2)
+        if not (HMP_flag and self.mH>399.):
+            signalBW_VBF_HM = ROOT.RooRelBWHighMass("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
+            #         else: signalBW_ggH_HM = ROOT.RooSigPlusInt("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
+        else: signalBW_VBF_HM = ROOT.RooCPSHighMassVBF("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+
+        sig_VBF_HM =  ROOT.RooFFTConvPdf("sig_VBF","BW (X) CB",CMS_zz4l_mass,signalBW_VBF_HM,signalCB_VBF, 2)
+
                        
         
         signalCB_WH = ROOT.RooDoubleCB("signalCB_WH","signalCB_WH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
         #Low mass pdf
-        signalBW_WH = ROOT.RooRelBWUFParam("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale)
+        signalBW_WH = ROOT.RooRelBWUFParam("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
         sig_WH = ROOT.RooFFTConvPdf("sig_WH","BW (X) CB",CMS_zz4l_mass,signalBW_WH,signalCB_WH, 2)
         #High mass pdf
-        if not (HMP_flag and self.mH>399.): signalBW_WH_HM = ROOT.RooRelBWHighMass("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-#         else: signalBW_WH_HM = ROOT.RooSigPlusInt("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_WH_HM = ROOT.RooBWHighMassGGH("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,self.is8TeV)        
-        sig_WH_HM = ROOT.RooFFTConvPdf("sig_WH","BW (X) CB",CMS_zz4l_mass,signalBW_WH_HM,signalCB_WH, 2)
+        if not (HMP_flag and self.mH>399.):
+            signalBW_WH_HM = ROOT.RooRelBWHighMass("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
+            #         else: signalBW_ggH_HM = ROOT.RooSigPlusInt("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
+        else: signalBW_WH_HM = ROOT.RooBWHighMassGGH("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+
+        sig_WH_HM =  ROOT.RooFFTConvPdf("sig_WH","BW (X) CB",CMS_zz4l_mass,signalBW_WH_HM,signalCB_WH, 2)
+
 
         
         signalCB_ZH = ROOT.RooDoubleCB("signalCB_ZH","signalCB_ZH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
         #Low mass pdf
-        signalBW_ZH = ROOT.RooRelBWUFParam("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale)
+        signalBW_ZH = ROOT.RooRelBWUFParam("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
         sig_ZH = ROOT.RooFFTConvPdf("sig_ZH","BW (X) CB",CMS_zz4l_mass,signalBW_ZH,signalCB_ZH, 2)
         #High mass pdf
-        if not (HMP_flag and self.mH>399.): signalBW_ZH_HM = ROOT.RooRelBWHighMass("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-#         else: signalBW_ZH_HM = ROOT.RooSigPlusInt("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_ZH_HM = ROOT.RooBWHighMassGGH("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,self.is8TeV)        
-        sig_ZH_HM = ROOT.RooFFTConvPdf("sig_ZH","BW (X) CB",CMS_zz4l_mass,signalBW_ZH_HM,signalCB_ZH, 2)
+        if not (HMP_flag and self.mH>399.):
+            signalBW_ZH_HM = ROOT.RooRelBWHighMass("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
+            #         else: signalBW_ZH_HM = ROOT.RooSigPlusInt("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
+        else: signalBW_ZH_HM = ROOT.RooBWHighMassGGH("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+
+        sig_ZH_HM =  ROOT.RooFFTConvPdf("sig_ZH","BW (X) CB",CMS_zz4l_mass,signalBW_ZH_HM,signalCB_ZH, 2)
+        
 
         
         signalCB_ttH = ROOT.RooDoubleCB("signalCB_ttH","signalCB_ttH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
         #Low mass pdf
-        signalBW_ttH = ROOT.RooRelBWUFParam("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale)
-        sig_ttH = ROOT.RooFFTConvPdf("sig_ttH","BW (X) CB",CMS_zz4l_mass,signalBW_ttH,signalCB_ttH, 2) 
+        signalBW_ttH = ROOT.RooRelBWUFParam("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        sig_ttH = ROOT.RooFFTConvPdf("sig_ttH","BW (X) CB",CMS_zz4l_mass,signalBW_ttH,signalCB_ttH, 2)
         #High mass pdf
-        if not (HMP_flag and self.mH>399.): signalBW_ttH_HM = ROOT.RooRelBWHighMass("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-#         else: signalBW_ttH_HM = ROOT.RooSigPlusInt("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_ttH_HM = ROOT.RooBWHighMassGGH("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,self.is8TeV)        
-        sig_ttH_HM = ROOT.RooFFTConvPdf("sig_ttH","BW (X) CB",CMS_zz4l_mass,signalBW_ttH_HM,signalCB_ttH, 2)
+        if not (HMP_flag and self.mH>399.):
+            signalBW_ttH_HM = ROOT.RooRelBWHighMass("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
+            #         else: signalBW_ttH_HM = ROOT.RooSigPlusInt("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
+        else: signalBW_ttH_HM = ROOT.RooBWHighMassGGH("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+
+        sig_ttH_HM =  ROOT.RooFFTConvPdf("sig_ttH","BW (X) CB",CMS_zz4l_mass,signalBW_ttH_HM,signalCB_ttH, 2)
+        
         
         
         ## Buffer fraction for cyclical behavior
@@ -2719,7 +2703,7 @@ class datacardClass:
         bkgRate_zjets_Shape = sclFactorBkg_zjets * bkg_zjets.createIntegral( ROOT.RooArgSet(CMS_zz4l_mass), ROOT.RooFit.Range("shape") ).getVal()
         
         if(DEBUG):
-            print "Shape signal rate: ",sigRate_ggH_Shape,", background rate: ",bkgRate_qqzz_Shape,", ",bkgRate_zjets_Shape," in ",low_M," - ",high_M
+            print "Shape signal rate: ",sigRate_ggH_Shape,", background rate: ",bkgRate_qqzz_Shape,", ",bkgRate_zjets_Shape," in ",self.low_M," - ",self.high_M
             CMS_zz4l_mass.setRange("lowmassregion",100.,160.)
             bkgRate_qqzz_lowmassregion = sclFactorBkg_qqzz * bkg_qqzz.createIntegral( ROOT.RooArgSet(CMS_zz4l_mass), ROOT.RooFit.Range("lowmassregion") ).getVal()
             bkgRate_ggzz_lowmassregion = sclFactorBkg_ggzz * bkg_ggzz.createIntegral( ROOT.RooArgSet(CMS_zz4l_mass), ROOT.RooFit.Range("lowmassregion") ).getVal()
@@ -2813,9 +2797,8 @@ class datacardClass:
         if self.isHighMass :
             w.importClassCode(RooRelBWHighMass.Class(),True)
             if HMP_flag:
-                w.importClassCode(RooSigPlusInt.Class(),True)
                 w.importClassCode(RooBWHighMassGGH.Class(),True)
-                w.importClassCode(RooBWHighMassVBF.Class(),True)
+                w.importClassCode(RooCPSHighMassVBF.Class(),True)                
 
         if( FactorizedShapes ):
             if( self.channel == self.ID_4mu ):
