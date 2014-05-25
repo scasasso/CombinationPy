@@ -117,7 +117,7 @@ void djetEfficiencyratio_w() {
 
   //ggH
   djetEfficiencyratio_w(fs4mu,  7,ggH,JES,&fileOutYields);
-  /*djetEfficiencyratio_w(fs4e,   7,ggH,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   7,ggH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs2e2mu,7,ggH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4mu,  8,ggH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   8,ggH,JES,&fileOutYields);
@@ -129,7 +129,7 @@ void djetEfficiencyratio_w() {
   djetEfficiencyratio_w(fs2e2mu,7,qqH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4mu,  8,qqH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   8,qqH,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs2e2mu,8,qqH,JES,&fileOutYields);*/
+  djetEfficiencyratio_w(fs2e2mu,8,qqH,JES,&fileOutYields);
 
   /*
   //ZH

@@ -57,6 +57,94 @@ const TString destDir = "../CreateDatacards/templates2D/";
 
 //=======================================================================
 
+TH2F* makebkg(TH2F *SM1, TH2F *SM10, TH2F *SM25){
+  float denomscale = 60.-24.*sqrt(10.);
+
+  TH2F* madebkg = (TH2F*) SM1->Clone("madebkg");
+  madebkg->Scale(50.-25.*sqrt(10.));
+  madebkg->Add(SM10,20);
+  madebkg->Add(SM25,-10.+sqrt(10.));
+  madebkg->Scale(1/denomscale);
+  //madebkg->Scale(1./madebkg->Integral());
+
+  int nXbins=madebkg->GetNbinsX();
+  int nYbins=madebkg->GetNbinsY();
+    
+  //TCanvas* c1 = new TCanvas("c1","c1",800,800);
+  //c1->cd();
+  //madebkg->Draw("COLZ");
+  /*
+  // normalize slices
+
+  double norm;
+  TH1F* tempProj;
+  
+  for(int i=1; i<=nXbins; i++){   
+    tempProj = (TH1F*) madebkg->ProjectionY("tempProj",i,i);
+    norm=tempProj->Integral();
+    cout<<norm<<endl;
+
+    if (norm!=0.) { // Avoid introducing NaNs in the histogram
+      for(int j=1; j<=nYbins; j++){
+        madebkg->SetBinContent(i,j, madebkg->GetBinContent(i,j)/norm   );
+      }
+    }
+  }
+
+  
+  // average 
+
+  TH2F* notSmooth = new TH2F(*madebkg);
+
+  int effectiveArea=1;
+  double average=0,binsUsed=0;
+
+  for(int i=1; i<=nXbins; i++){
+    for(int j=1; j<=nYbins; j++){
+
+      //  binMzz=(i-1)*2+181;
+      float binMzz = madebkg->GetBinCenter(i);
+
+      if( binMzz<300 ) continue;
+      if( binMzz>=300 && binMzz<350 ) effectiveArea=1;
+      if( binMzz>=350 && binMzz<500 ) effectiveArea=3;
+      if( binMzz>=500 && binMzz<600 ) effectiveArea=5;
+      if( binMzz>=600 && binMzz<800 ) effectiveArea=7;
+      if( binMzz>=800 && binMzz<1000) effectiveArea=11;
+      if( binMzz>=1000 && binMzz<1200)effectiveArea=15;
+      if( binMzz>=1200 ) effectiveArea=25;
+      
+      for(int a=-effectiveArea; a<=effectiveArea; a++){
+        if(a+i<1 || a+i>nXbins || j>nYbins || j<1) continue;
+        average+= notSmooth->GetBinContent(a+i,j);
+        binsUsed++;
+      }
+      
+      madebkg->SetBinContent(i,j,average/binsUsed);
+
+      average=0;
+      binsUsed=0;
+
+    } // end loop over D
+  } // end loop over mZZ
+   // end of horizontal averaging
+  
+  // smooth
+
+  madebkg->Smooth();
+  
+  for(int i=1; i<=nXbins; i++){
+    for(int j=1; j<=nYbins; j++){
+      if(madebkg->GetBinContent(i,j)==0)
+      madebkg->SetBinContent(i,j,.00001);
+    }// for(int j=1; j<=nYbins; j++){
+  }// for(int i=1; i<=nXbins; i++){
+    */
+  return madebkg;
+}
+
+//=======================================================================
+
 pair<TH2F*,TH2F*> reweightForCRunc(TH2F* temp){
 
   cout << "reweightForCRunc" << endl;
@@ -132,7 +220,7 @@ pair<TH2F*,TH2F*> reweightForCRunc(TH2F* temp){
       //float m=(i*2.+101.); // NA: This is the center of bin i+1 and not of bin i... why?
       float m=temp->GetBinCenter(i+1); 
       if( m>=low[p] && m<high[p] ){
-	point = p;
+      	point = p;
       }
     }
     if(point == -1){
@@ -281,41 +369,26 @@ void buildChain(TChain* bkgMC, TString channel, int sampleIndex=0) {
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H125.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H126.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H128.root");
-      //bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H130.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H140.root");
-      //bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H150.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H160.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H170.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H180.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H185.root");
-      //bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H190.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15jhuGenV3H200.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H210.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H220.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H250.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H275.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H300.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H325.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H350.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H400.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H425.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H450.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H475.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H500.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H525.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H550.root");
-      bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H575.root");
       bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H600.root");
       if (extendToHighMass) {
-	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H650.root");
-	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H700.root");
-	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H750.root");
-	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H800.root");
-	// bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H850.root");
-	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H900.root");
-	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_H950.root");
-	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H1000.root");
-	}
+      	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H650.root");
+      	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H700.root");
+      	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H800.root");
+      	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H900.root");
+      	bkgMC->Add(filePath7TeV + "/" + chPath +"/HZZ4lTree_powheg15H1000.root");
+    	}
     }
     if(useSqrts%2==0){
       //8TeV
@@ -342,27 +415,18 @@ void buildChain(TChain* bkgMC, TString channel, int sampleIndex=0) {
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H250.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H275.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H300.root");
-      bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H325.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H350.root");
-      bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H375.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H400.root");
-      bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H425.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H450.root");
-      bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H475.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H500.root");
-      bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H525.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H550.root");
-      bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H575.root");
       bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H600.root");
       if (extendToHighMass) {
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H650.root");
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H700.root");
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H750.root");
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H800.root");
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H850.root");
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H900.root");
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_H950.root");
-	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H1000.root");
+      	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H650.root");
+      	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H700.root");
+      	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H800.root");
+      	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H900.root");
+      	bkgMC->Add(filePath8TeV + "/" + chPath +"/HZZ4lTree_powheg15H1000.root");
       }
     }
     
@@ -401,6 +465,18 @@ void buildChain(TChain* bkgMC, TString channel, int sampleIndex=0) {
     abort(); // Standard location of these files still being arranged.
     //       sprintf(temp,"CJLSTtree_Jun25_2012/JHUsignal/HZZ%sTree_%s.root",channel,sample[sampleIndex].c_str());
     //       bkgMC->Add(temp);
+  } else if(sampleIndex==4){ //Needs to be changed when background in place
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4mu.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4e.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_2e2mu.root");
+  } else if(sampleIndex==5){ //Needs to be changed when background in place
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4mu10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4e10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
+  } else if(sampleIndex==6){ //Needs to be changed when background in place
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4mu25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4e25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
   }
     
 }
@@ -448,12 +524,7 @@ TH2F* fillTemplate(TString channel="4mu", int sampleIndex=0,bool isLowMass=true)
   
   bkgMC->SetBranchAddress("ZZMass",&mzz);
   bkgMC->SetBranchAddress("MC_weight_noxsec",&w);
-  /*
-  if(sampleIndex == 0 && isLowMass && (channel == "4mu" || channel == "4e"))
-    {
-      bkgMC->SetBranchAddress("LIWeight",&interfw);
-    }
-  */
+
   if (recompute_) {
     bkgMC->SetBranchAddress("Z1Mass",&m1);
     bkgMC->SetBranchAddress("Z2Mass",&m2);
@@ -542,7 +613,7 @@ TH2F* fillTemplate(TString channel="4mu", int sampleIndex=0,bool isLowMass=true)
 
     if (norm>0) { // Avoid introducing NaNs in the histogram
       for(int j=1; j<=nYbins; j++){
-	bkgHist->SetBinContent(i,j, bkgHist->GetBinContent(i,j)/norm   );
+      	bkgHist->SetBinContent(i,j, bkgHist->GetBinContent(i,j)/norm   );
       }
     }
 
@@ -561,28 +632,28 @@ TH2F* fillTemplate(TString channel="4mu", int sampleIndex=0,bool isLowMass=true)
     for(int i=1; i<=nXbins; i++){
       for(int j=1; j<=nYbins; j++){
 	
-	//	binMzz=(i-1)*2+181;
-	float binMzz = bkgHist->GetBinCenter(i);
+      	//	binMzz=(i-1)*2+181;
+      	float binMzz = bkgHist->GetBinCenter(i);
 
-	if( binMzz<300 ) continue;
-	if( binMzz>=300 && binMzz<350 ) effectiveArea=1;
-	if( binMzz>=350 && binMzz<500 ) effectiveArea=3;
-	if( binMzz>=500 && binMzz<600 ) effectiveArea=5;
-	if( binMzz>=600 && binMzz<800 ) effectiveArea=7;
-	if( binMzz>=800 && binMzz<1000) effectiveArea=11;
-	if( binMzz>=1000 && binMzz<1200)effectiveArea=15;
-	if( binMzz>=1200 ) effectiveArea=25;
-	
-	for(int a=-effectiveArea; a<=effectiveArea; a++){
-	  if(a+i<1 || a+i>nXbins || j>nYbins || j<1) continue;
-	  average+= notSmooth->GetBinContent(a+i,j);
-	  binsUsed++;
-	}
-	
-	bkgHist->SetBinContent(i,j,average/binsUsed);
+      	if( binMzz<300 ) continue;
+      	if( binMzz>=300 && binMzz<350 ) effectiveArea=1;
+      	if( binMzz>=350 && binMzz<500 ) effectiveArea=3;
+      	if( binMzz>=500 && binMzz<600 ) effectiveArea=5;
+      	if( binMzz>=600 && binMzz<800 ) effectiveArea=7;
+      	if( binMzz>=800 && binMzz<1000) effectiveArea=11;
+      	if( binMzz>=1000 && binMzz<1200)effectiveArea=15;
+      	if( binMzz>=1200 ) effectiveArea=25;
+      	
+      	for(int a=-effectiveArea; a<=effectiveArea; a++){
+      	  if(a+i<1 || a+i>nXbins || j>nYbins || j<1) continue;
+      	  average+= notSmooth->GetBinContent(a+i,j);
+      	  binsUsed++;
+      	}
+      	
+      	bkgHist->SetBinContent(i,j,average/binsUsed);
 
-	average=0;
-	binsUsed=0;
+      	average=0;
+      	binsUsed=0;
 	
       } // end loop over D
     } // end loop over mZZ
@@ -648,6 +719,7 @@ void makeTemplate(TString channel="4mu"){
   }
   //  sprintf(temp,"../datafiles/Dbackground_qqZZ_%s.root",channel.Data());
   TFile* fqqZZ = new TFile(destDir + "Dbackground_qqZZ_" + channel + ".root","RECREATE");
+  TFile* fVBFBkg = new TFile(destDir + "Dbackground_VBFBkg_" + channel + ".root","RECREATE");
   //  sprintf(temp,"../datafiles/Dbackground_ggZZ_%s.root",channel.Data());
   TFile* fggZZ = new TFile(destDir + "Dbackground_ggZZ_" + channel + ".root","RECREATE");
   TFile* fZX = new TFile(destDir + "Dbackground_ZX_" + channel + ".root","RECREATE");
@@ -659,11 +731,11 @@ void makeTemplate(TString channel="4mu"){
   
   // ========================================
   // SM Higgs template
-
+  /*
   low = fillTemplate(channel,0,true);
   high = fillTemplate(channel,0,false);
   h_mzzD = mergeTemplates(low,high);
-
+  */
 
   // ---------- apply interference reweighting --------
   
@@ -677,7 +749,7 @@ void makeTemplate(TString channel="4mu"){
     cout << "h_mzzD: " << h_mzzD << endl;*/
 
   // --------------------------------------------------
-
+  /*
   fsig->cd();
 
   h_mzzD->Write("h_mzzD");
@@ -685,7 +757,7 @@ void makeTemplate(TString channel="4mu"){
   h_mzzD->Write("h_mzzD_up");
   h_mzzD->Write("h_mzzD_dn");
   fsig->Close();
-
+  */
   // ========================================
   // alternative signal template
 
@@ -717,7 +789,7 @@ void makeTemplate(TString channel="4mu"){
   
   // =======================================
   // qqZZ template
-
+  /*
   low = fillTemplate(channel,1,true);
   high = fillTemplate(channel,1,false);
   h_mzzD = mergeTemplates(low,high);
@@ -739,6 +811,58 @@ void makeTemplate(TString channel="4mu"){
   histoPair.first->Write("h_mzzD_up");
   histoPair.second->Write("h_mzzD_dn");
   fqqZZ->Close();
+
+  */
+
+  // =======================================
+  // VBF qqZZ template
+
+  low = fillTemplate(channel,4,true);
+  high = fillTemplate(channel,4,false);
+  TH2F* SM1 = mergeTemplates(low,high);
+
+  low = fillTemplate(channel,5,true);
+  high = fillTemplate(channel,5,false);
+  TH2F* SM10 = mergeTemplates(low,high);
+
+  low = fillTemplate(channel,6,true);
+  high = fillTemplate(channel,6,false);
+  TH2F* SM25 = mergeTemplates(low,high);
+
+  /*TCanvas* c1 = new TCanvas("c1","c1",800,800);
+  c1->cd();
+  SM1->Draw("COLZ");
+
+  TCanvas* c2 = new TCanvas("c2","c2",800,800);
+  c2->cd();
+  SM10->Draw("COLZ");
+
+  TCanvas* c3 = new TCanvas("c3","c3",800,800);
+  c3->cd();
+  SM25->Draw("COLZ");*/
+
+  h_mzzD = makebkg(SM1,SM10,SM25);
+
+  oldTemp = new TH2F(*h_mzzD);
+  oldTemp->SetName("oldTemp");
+
+  // ---------- apply interference reweighting --------
+
+  cout << "apply systematics for zjets control region" << endl;
+  
+  histoPair = reweightForCRunc(h_mzzD);
+
+  // --------------------------------------------------
+
+  fVBFBkg->cd();
+  h_mzzD->Write("h_mzzD");
+  oldTemp->Write("oldTemp");
+  SM1->Write("SM1");
+  SM10->Write("SM10");
+  SM25->Write("SM25");
+  histoPair.first->Write("h_mzzD_up");
+  histoPair.second->Write("h_mzzD_dn");
+  fVBFBkg->Close();
 
   // ==========================
   // ggZZ templates
@@ -827,8 +951,8 @@ void makeTemplate(TString channel="4mu"){
 void storeLDDistribution(){
 
   makeTemplate("4mu");
-  makeTemplate("4e");
-  makeTemplate("2e2mu");
+  //makeTemplate("4e");
+  //makeTemplate("2e2mu");
 
 }
 

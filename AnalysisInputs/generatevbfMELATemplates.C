@@ -23,9 +23,14 @@
 #include "Config.h"
 
 //User determined Parameters
-const TString destDir = "../CreateDatacards/templates2D/";
+const TString destDir = "../CreateDatacards/templates2D/TEST/";
 int useSqrts=0;                                                   // 0=use 7+8TeV; 1=use 7TeV only, 2 use 8TeV only
-TFile* fggH,*fqqH,*fqqZZ,*fggZZ,*fZX,*fZH,*fWH,*fttH;
+
+TString samples[11]={"ggF","VBF","qqZZ","ggZZ","Z+X","ZH","WH","ttH","VBF Bkg","VBF Bkg","VBF Bkg"};
+TString lowmassstr[2]={"Low Mass Region","High Mass Region"};
+TString updownstr[5]={"JEC down","Nominal","JEC up","Alt shape","Alt shape 2"};
+
+TFile* fggH,*fqqH,*fqqZZ,*fggZZ,*fZX,*fZH,*fWH,*fttH,*fVBFBkg;
 
 //Global Parameters (not tested if cause issues if altered)
 bool extendToHighMass = true;                                     // Include signal samples above 600 GeV
@@ -48,6 +53,7 @@ float altscale(float Fisher, int channel, int altnum);            // Find scale 
 TH2F* mirrortemplates(int sampleIndex);                           // Generates mirror alternative shapes for Fisher when no second alternative exists
 bool test_bit(int mask, unsigned int iBit);                       // Used to identify correct CR events
 void progressbar(int val, int tot);                               // Output progress bar
+TH2F* makebkg(TH2F *SM1, TH2F *SM10, TH2F *SM25);                 // Subroutine for VBF qqZZ background, will be replaced when the full-sim come through
 
 //---------------------------------------------------
 
@@ -68,28 +74,45 @@ void templateOptions(bool debug, bool findAlternatives){
     makeTemplate(3,debug);
     combineTemplates(true);
   }
+  if(!findAlternatives){
+    combineTemplates(false);
+  }
 }
 
 void combineTemplates(bool moreAlt){
-  TString sig[8] = {"ggH","qqH","qqZZ","ZH","WH","ttH","ggZZ","Z+X"};
-  for (int i = 0; i < 8; i++)
+  TString sig[9] = {"ggH","qqH","qqZZ","ZH","WH","ttH","ggZZ","Z+X","VBFBkg"};
+  for (int i = 0; i < 9; i++)
     {
-      TFile* fishDef = new TFile(destDir+sig[i]+"_vbfMELA.root", "OPEN");
+
+      TString debugname;  
+      if (!moreAlt) debugname="_unnormalized";
+
+      TFile* fishDef = new TFile(destDir+sig[i]+"_vbfMELA"+debugname+".root", "OPEN");
       TH2F* Default = (TH2F*)fishDef->Get("H_Djet");
       
       TFile* fishUp;
-      if(i==0 || i==1 || i==2) fishUp = new TFile(destDir+sig[i]+"_vbfMELA_alt.root","OPEN");
-      else if(i==3 || i==4 || i==5 || i==6) fishUp = new TFile(destDir+sig[i]+"_vbfMELA_up.root","OPEN");
-      else if(i==7) fishUp = new TFile(destDir+sig[i]+"_vbfMELA.root","OPEN");
+      if(moreAlt){
+        if(i==0 || i==1 || i==2) fishUp = new TFile(destDir+sig[i]+"_vbfMELA_alt.root","OPEN");
+        else if(i==3 || i==4 || i==5 || i==6 || i==8) fishUp = new TFile(destDir+sig[i]+"_vbfMELA_up.root","OPEN");
+        else if(i==7) fishUp = new TFile(destDir+sig[i]+"_vbfMELA.root","OPEN");
+      }
+      else{
+        fishUp = new TFile(destDir+sig[i]+"_vbfMELA"+debugname+".root","OPEN");
+      }
       TH2F* Up = (TH2F*)fishUp->Get("H_Djet");
       
       TFile* fishDn;
-      if(i==0 || i==1 || i==2) fishDn = new TFile(destDir+sig[i]+"_vbfMELA_alt2.root","OPEN");
-      else if(i==3 || i==4 || i==5 || i==6) fishDn = new TFile(destDir+sig[i]+"_vbfMELA_down.root","OPEN");
-      else if(i==7) fishDn = new TFile(destDir+sig[i]+"_vbfMELA.root","OPEN");
+      if(moreAlt){
+        if(i==0 || i==1 || i==2) fishDn = new TFile(destDir+sig[i]+"_vbfMELA_alt2.root","OPEN");
+        else if(i==3 || i==4 || i==5 || i==6 || i==8) fishDn = new TFile(destDir+sig[i]+"_vbfMELA_down.root","OPEN");
+        else if(i==7) fishDn = new TFile(destDir+sig[i]+"_vbfMELA.root","OPEN");
+      }
+      else{
+        fishDn = new TFile(destDir+sig[i]+"_vbfMELA"+debugname+".root","OPEN");
+      }      
       TH2F* Down = (TH2F*)fishDn->Get("H_Djet");
-      
-      TFile* Out = new TFile(destDir+sig[i]+"_fisher.root","RECREATE");
+
+      TFile* Out = new TFile(destDir+sig[i]+"_fisher"+debugname+".root","RECREATE");
       Out->cd();
 
       Default->Write("h_Fisher");
@@ -174,7 +197,7 @@ void buildChain(TChain* bkgMC, int sampleIndex){
       }
     }
   }
-  if(sampleIndex!=2 && sampleIndex!=3 && sampleIndex!=4 && sampleIndex!=-8){
+  if(sampleIndex!=2 && sampleIndex!=3 && sampleIndex!=4 && sampleIndex!=-8 && sampleIndex!=8 && sampleIndex!=9 && sampleIndex!=10){
     if(nPoints==0){
       cout<<"nPoints not set in Config.h"<<endl;
       abort();
@@ -229,264 +252,6 @@ void buildChain(TChain* bkgMC, int sampleIndex){
       bkgMC->Add(finalInPath2mu2e.c_str());
     }
   }
-  /*else if (sampleIndex==0){
-    if(useSqrts<2){
-      for(int i=0;i<nPoints;i++){
-        bkgMC->Add(filepath7TeV + "4mu/HZZ4lTree_minloH" + (long)masses[i] + ".root");
-        bkgMC->Add(filepath7TeV + "4e/HZZ4lTree_minloH" + (long)masses[i] + ".root");
-        bkgMC->Add(filepath7TeV + "2mu2e/HZZ4lTree_minloH" + (long)masses[i] + ".root");
-      }
-    }
-    if(useSqrts%2==0){
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH90.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH95.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH100.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH105.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH110.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH115.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH120.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH124.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH125.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH126.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH130.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH135.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH140.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH145.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH150.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH155.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH170.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH180.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH190.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH200.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH250.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH350.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH400.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH450.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH500.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH550.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH600.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH650.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH700.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH750.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH800.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH850.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH900.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH950.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_minloH1000.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH90.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH95.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH100.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH105.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH110.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH115.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH120.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH124.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH125.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH126.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH130.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH135.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH140.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH145.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH150.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH155.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH170.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH180.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH190.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH200.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH250.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH350.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH400.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH450.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH500.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH550.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH600.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH650.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH700.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH750.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH800.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH850.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH900.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH950.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_minloH1000.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH90.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH95.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH100.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH105.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH110.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH115.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH120.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH124.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH125.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH126.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH130.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH135.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH140.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH145.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH150.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH155.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH170.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH180.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH190.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH200.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH250.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH350.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH400.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH450.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH500.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH550.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH600.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH650.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH700.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH750.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH800.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH850.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH900.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH950.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_minloH1000.root");
-    }
-  }*/
-  /*else if(sampleIndex==1){
-    if(useSqrts<2){
-      for(int i=0;i<nPoints;i++){
-        bkgMC->Add(filepath7TeV + "4mu/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
-        bkgMC->Add(filepath7TeV + "4e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
-        bkgMC->Add(filepath7TeV + "2mu2e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
-      }
-    }
-    if(useSqrts%2==0){
-      for(int i=0;i<nPoints;i++){
-        bkgMC->Add(filepath8TeV + "4mu/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
-        bkgMC->Add(filepath8TeV + "4e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
-        bkgMC->Add(filepath8TeV + "2mu2e/HZZ4lTree_" + (masses[i]<200?"VBFH":"powheg15VBFH") + (long)masses[i] + ".root";);
-      }
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH116.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH117.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH118.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH119.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH120.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH121.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH122.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH123.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH124.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH125.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH126.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH127.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH128.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH129.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH130.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH135.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH140.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH145.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH150.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH160.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH170.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH180.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_VBFH190.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH200.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH225.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH250.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH275.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH300.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH350.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH400.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH450.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH500.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH550.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH600.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH650.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH700.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH750.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH800.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH850.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH900.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH950.root");
-      bkgMC->Add(filePath8TeV + "4mu/HZZ4lTree_powheg15VBFH1000.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH116.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH117.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH118.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH119.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH120.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH121.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH122.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH123.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH124.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH125.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH126.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH127.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH128.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH129.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH130.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH135.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH140.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH145.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH150.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH160.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH170.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH180.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_VBFH190.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH200.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH225.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH250.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH275.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH300.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH350.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH400.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH450.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH500.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH550.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH600.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH650.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH700.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH750.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH800.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH850.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH900.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH950.root");
-      bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_powheg15VBFH1000.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH116.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH117.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH118.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH119.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH120.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH121.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH122.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH123.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH124.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH125.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH126.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH127.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH128.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH129.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH130.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH135.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH140.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH145.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH150.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH160.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH170.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH180.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_VBFH190.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH200.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH225.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH250.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH275.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH300.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH350.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH400.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH450.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH500.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH550.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH600.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH650.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH700.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH750.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH800.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH850.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH900.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH950.root");
-      bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_powheg15VBFH1000.root");
-    }
-  }*/
   else if (sampleIndex==2){
     if(useSqrts<2){
       bkgMC->Add(filePath7TeV + "4mu/HZZ4lTree_ZZTo4mu.root");
@@ -561,6 +326,39 @@ void buildChain(TChain* bkgMC, int sampleIndex){
     bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_ZZJetsTo4L.root");
     bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_ZZJetsTo4L.root");
   }
+  else if(sampleIndex==8){ //Needs to be changed to more general location
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4mu.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4e.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_2e2mu.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4mu.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4e.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_2e2mu.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4mu.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4e.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_2e2mu.root");
+  }
+  else if(sampleIndex==9){ //Needs to be changed to more general location
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4mu10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4e10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4mu10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4e10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4mu10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4e10SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
+  }  
+  else if(sampleIndex==10){ //Needs to be changed to more general location
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4mu25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4e25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4mu25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4e25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4mu25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4e25SM.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
+  }    
 }
 
 
@@ -594,6 +392,7 @@ void makeTemplate(int updown, bool debug){
     fZH = new TFile(destDir + "ZH_vbfMELA"+jes+debugname+".root","RECREATE");
     fWH = new TFile(destDir + "WH_vbfMELA"+jes+debugname+".root","RECREATE");
     fttH = new TFile(destDir + "ttH_vbfMELA"+jes+debugname+".root","RECREATE");
+    fVBFBkg = new TFile(destDir + "VBFBkg_vbfMELA"+jes+debugname+".root","RECREATE");
   } else{
     fqqH = new TFile(destDir + "qqH_vbfMELA"+jes+debugname+".root","RECREATE");
     fggH = new TFile(destDir + "ggH_vbfMELA"+jes+debugname+".root","RECREATE");
@@ -604,7 +403,6 @@ void makeTemplate(int updown, bool debug){
   
   // =========================
   // ggH
-  
   
   low = fillTemplate(0,true,updown);
   high = fillTemplate(0,false,updown);
@@ -635,20 +433,13 @@ void makeTemplate(int updown, bool debug){
   H_Djet->Write("H_Djet");
   fqqH->Close();
   
-
+  
   // ==========================
   // qqZZ
 
-  //if(updown<2){
-    low = fillTemplate(2,true,updown);
-    high = fillTemplate(2,false,updown);
-    H_Djet = mergeTemplates(low,high);
-    /*  }
-  if(updown==2){
-    low = fillTemplate(-8,true,updown);
-    high = fillTemplate(-8,false,updown);
-    H_Djet = mergeTemplates(low,high);
-    }*/
+  low = fillTemplate(2,true,updown);
+  high = fillTemplate(2,false,updown);
+  H_Djet = mergeTemplates(low,high);
 
   if (!debug) smoothtemplates(H_Djet,2);
   if (!debug && updown==2) altshapes(H_Djet,2,1);
@@ -659,9 +450,9 @@ void makeTemplate(int updown, bool debug){
       tempProj = (TH1F*) H_Djet->ProjectionY("tempProj",i,i);
       float norm=tempProj->Integral();
       if (norm>0) { // Avoid introducing NaNs in the histogram
-	for(int j=1; j<=H_Djet->GetNbinsY(); j++){
-	  H_Djet->SetBinContent(i,j, H_Djet->GetBinContent(i,j)/norm);
-	}
+      	for(int j=1; j<=H_Djet->GetNbinsY(); j++){
+      	  H_Djet->SetBinContent(i,j, H_Djet->GetBinContent(i,j)/norm);
+      	}
       }
     }
   }
@@ -672,7 +463,6 @@ void makeTemplate(int updown, bool debug){
   fqqZZ->cd();
   H_Djet->Write("H_Djet");
   fqqZZ->Close();
-  
   
   if (updown==0 || updown==1 || updown==-1){
     // ==========================
@@ -691,7 +481,6 @@ void makeTemplate(int updown, bool debug){
     // ==========================
     // Z+X
     
-    //if(updown==0){
     low = fillTemplate(4,true,updown);
     high = fillTemplate(4,false,updown);
     H_Djet = mergeTemplates(low,high);
@@ -701,7 +490,6 @@ void makeTemplate(int updown, bool debug){
     fZX->cd();
     H_Djet->Write("H_Djet");
     fZX->Close();
-      //}
     
     // ==========================
     // ZH
@@ -741,6 +529,47 @@ void makeTemplate(int updown, bool debug){
     fttH->cd();
     H_Djet->Write("H_Djet");
     fttH->Close();
+    
+    // ==========================
+    // VBF qqZZ (This will be changed soon)
+    
+    low = fillTemplate(8,true,updown);
+    high = fillTemplate(8,false,updown);
+    H_Djet = mergeTemplates(low,high);
+    
+    //if (!debug) smoothtemplates(H_Djet,8);
+
+    TH2F* SM1 = (TH2F*) H_Djet->Clone("SM1");
+
+    //TCanvas* c1 = new TCanvas("c1","c1",800,800);
+    //c1->cd();
+    //SM1->Draw("colz");
+
+    low = fillTemplate(9,true,updown);
+    high = fillTemplate(9,false,updown);
+    H_Djet = mergeTemplates(low,high);
+    
+    //if (!debug) smoothtemplates(H_Djet,9);
+
+    TH2F* SM10 = (TH2F*) H_Djet->Clone("SM10");
+
+    low = fillTemplate(10,true,updown);
+    high = fillTemplate(10,false,updown);
+    H_Djet = mergeTemplates(low,high);
+    
+    //if (!debug) smoothtemplates(H_Djet,10);
+
+    TH2F* SM25 = (TH2F*) H_Djet->Clone("SM25");
+
+    H_Djet = makebkg(SM1,SM10,SM25);
+    if (!debug) smoothtemplates(H_Djet,8);
+
+    fVBFBkg->cd();
+    SM1->Write("SM1");
+    SM10->Write("SM10");
+    SM25->Write("SM25");
+    H_Djet->Write("H_Djet");
+    fVBFBkg->Close();        
   }
 }
 
@@ -750,10 +579,10 @@ TH2F* fillTemplate(int sampleIndex,bool isLowMass,int updown){
   TChain* bkgMC = new TChain("SelectedTree");
   buildChain(bkgMC,sampleIndex);
 
-  cout << "Chain for " << sampleIndex << " " << isLowMass << " " << updown << " " << bkgMC->GetEntries() << endl;
+  cout << "Chain for " << samples[sampleIndex] << ", " << lowmassstr[isLowMass] << ", " << updownstr[updown+1] << " with  " << bkgMC->GetEntries() << " events." << endl;
   bkgMC->ls();
 
-  float mass,w,phjj,pvbf,Djet,phjj_old,pvbf_old;
+  float mass,w,phjj,pvbf,Djet,mJJ;
   Short_t njets;
   int processID;
   int CRflag;
@@ -761,15 +590,6 @@ TH2F* fillTemplate(int sampleIndex,bool isLowMass,int updown){
 
   bkgMC->SetBranchAddress("ZZMass",&mass);
   bkgMC->SetBranchAddress("NJets30",&njets);
-  /*bkgMC->SetBranchAddress("DiJetDEta",&deta);
-  if(updown==0 || updown==2 || updown==3){
-    bkgMC->SetBranchAddress("DiJetMass",&mJJ);
-  }else if(updown==1){
-    bkgMC->SetBranchAddress("DiJetMassPlus",&mJJ);
-  }else if(updown==-1){
-    bkgMC->SetBranchAddress("DiJetMassMinus",&mJJ);
-    }*/
-  //if(sampleIndex!=4){
   if(updown==0 || updown==2 || updown==3){
     bkgMC->SetBranchAddress("pvbf_VAJHU_old",&pvbf);
     bkgMC->SetBranchAddress("phjj_VAJHU_old",&phjj);
@@ -782,13 +602,11 @@ TH2F* fillTemplate(int sampleIndex,bool isLowMass,int updown){
     bkgMC->SetBranchAddress("pvbf_VAJHU_old_dn",&pvbf);
     bkgMC->SetBranchAddress("phjj_VAJHU_old_dn",&phjj);
   }
-    //}
   bkgMC->SetBranchAddress("MC_weight",&w);
+  bkgMC->SetBranchAddress("DiJetMass",&mJJ);
   bkgMC->SetBranchAddress("genProcessId",&processID);
   if(sampleIndex==4){
     bkgMC->SetBranchAddress("CRflag",&CRflag);
-    //bkgMC->SetBranchAddress("pvbf_VAJHU_old",&pvbf_old);
-    //bkgMC->SetBranchAddress("phjj_VAJHU_",&phjj_old);
   }
 
   TH2F* bkgHist;
@@ -801,54 +619,25 @@ TH2F* fillTemplate(int sampleIndex,bool isLowMass,int updown){
 
   //bkgHist->Sumw2();
 
+  //float peakw=0.;
+
   //Fill histogram
   for(int i=0; i<bkgMC->GetEntries(); i++){
     bkgMC->GetEntry(i);
-    /*if (i%50000==0){
-      cout << "event: " << i << "/" << bkgMC->GetEntries() <<endl;
-    }*/
-    /*if(i%percent==0){
-      cout<<"[ "<<i/percent<<"% |";
-      for(int k=0;k<i/percent;k++) cout<<"=";
-      if(i%percent!=100) cout<<">";
-      for(int k=i/percent+1;k<100;k++) cout<<" ";
-      cout<<"| ]";
-      fflush(stdout);
-      putchar('\r');
-    }*/
     progressbar(i,bkgMC->GetEntries());
-    //cout<<pvbf<<" "<<phjj;
     if((sampleIndex==4 && (test_bit(CRflag,5) || test_bit(CRflag,7) || test_bit(CRflag,9) || test_bit(CRflag,11))) || sampleIndex!=4){
       if (mass<100 || (sampleIndex!=4 && (njets<2 || phjj==-1. || pvbf==-1.)) || (sampleIndex==4 && (phjj==-1. || pvbf==-1.))) continue;
+      if(sampleIndex>7 && mJJ<130.) continue;
+      if(sampleIndex==0 && w<0) continue;
       //if(updown!=0) Fisher = 0.18*fabs(deta) + 0.000192*mJJ;
-      //if(sampleIndex!=4){
       Djet=pvbf/(pvbf+phjj);
-      /*}
-	else{
-	Djet=pvbf_old/(pvbf_old+phjj_old);
-	}*/
-      //cout<<mass<<" "<<sampleIndex<<" "<<phjj<<" "<<pvbf<<" "<<Djet;
       bkgHist->Fill(mass,Djet,w);
+      //if(sampleIndex>7 && mass>120. && mass<130.) peakw+=w; 
     }
   }
   cout<<endl;
 
-  /*int nXbins=bkgHist->GetNbinsX();
-  int nYbins=bkgHist->GetNbinsY();
-  int nBins=0;
-  int nBinstot=0;
-
-  for(int i=1; i<=nXbins; i++){
-    for(int j=1; j<=nYbins; j++){
-      if(bkgHist->GetBinContent(i,j)!=0.) nBinstot++;
-      if(bkgHist->GetBinContent(i,j)<0.){
-	//cout<<bkgHist->GetXaxis()->GetBinCenter(i)<<" "<<bkgHist->GetYaxis()->GetBinCenter(j)<<endl;
-	nBins++;
-	bkgHist->SetBinContent(i,j,0.);
-      }
-    }
-  }
-  cout<<"Fraction of negative bins: "<<float(nBins)/float(nBinstot)<<endl;*/
+  //cout<<"SUM OF WEIGHTS IN PEAK: "<<peakw<<endl;
 
   return bkgHist;
 }
@@ -887,10 +676,10 @@ TH2F* mergeTemplates(TH2F* lowTemp, TH2F* highTemp){
 //---------------------------------------------------
 
 TH2F* smoothtemplates(TH2F* inputdata, int sampleIndex){
-  if(sampleIndex<3){
+  if(sampleIndex<3){// || sampleIndex>7){
     rebin(inputdata,sampleIndex);
   }
-  else if(sampleIndex>2){
+  else if(sampleIndex>2){// && sampleIndex<8){
     rebin_lowstatistics(inputdata,sampleIndex);
   }
 
@@ -909,16 +698,27 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
 
   rebinnedHist->Sumw2();
 
+  int negativecolumns=0;
+  int negativebins2=0;
+
   //Normalization
   for(int i=1; i<=nXbins; i++){
     tempProj = (TH1F*) rebinnedHist->ProjectionY("tempProj",i,i);
     norm=tempProj->Integral();
-    if (norm>0) { // Avoid introducing NaNs in the histogram
+    for(int j=1; j<=nYbins; j++) if(rebinnedHist->GetBinContent(i,j)<0.) negativebins2++;
+    if (norm!=0) { // Avoid introducing NaNs in the histogram
       for(int j=1; j<=nYbins; j++){
-	rebinnedHist->SetBinContent(i,j, rebinnedHist->GetBinContent(i,j)/norm   );
+        rebinnedHist->SetBinContent(i,j, rebinnedHist->GetBinContent(i,j)/norm   );
       }
     }
+    if(norm<0){
+      cout<<i<<endl;
+      negativecolumns++;
+    }
   }
+
+  cout<<negativebins2<<"/"<<nXbins*nYbins<<endl;
+  cout<<negativecolumns<<"/"<<nXbins<<endl;
 
   TH2F* origHist = new TH2F (*rebinnedHist);
 
@@ -958,31 +758,6 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
   TH2F* Histstg1 = new TH2F (*rebinnedHist);
 
   Histstg1->Sumw2();
-  //rebinnedHist->Sumw2();
-  
-  //Rebin Fisher
-  /*for (int i=1; i<=nXbins; i++){
-    for (int j=1; j<=nYbins; j++){
-      float binFisher = rebinnedHist->GetYaxis()->GetBinCenter(j);
-
-      if( binFisher<0.2 ) continue;
-      if( binFisher>0.2 && binFisher<=1.0) effectiveArea=1;
-      if( binFisher>1.0 && binFisher<=1.2) effectiveArea=2;
-      if (binFisher>1.2 && binFisher<=1.4) effectiveArea=3;
-      if (binFisher>1.4) effectiveArea=5;
-
-      for(int a=-effectiveArea;a<=effectiveArea;a++){
-	if(j+a<1 || j+a>nYbins || i>nXbins || i<1) continue;
-	average+=Histstg1->GetBinContent(i,j+a);
-	binsUsed++;
-      }
-      rebinnedHist->SetBinContent(i,j,average/binsUsed);
-      average=0;
-      binsUsed=0;
-    }
-    }*/
-  
-  //rebinnedHist->Sumw2();
 
   //Use average of Nearest Neighbors to fill remaining zeroes
   for(int i=1; i<=nXbins;i++){
@@ -1012,25 +787,37 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
   if (usealt==-5) altshapes(rebinnedHist,2,1);
   if (usealt==-6) altshapes(rebinnedHist,2,2);  
 
+  int negativebins=0;
+
+  float averagebin=0.;
+  int totbins=0;
   for(int i=1; i<=nXbins; i++){
-    float averagebin=0.;
-    int totbins=0;
     for(int j=1; j<=nYbins; j++){
       averagebin+=rebinnedHist->GetBinContent(i,j);
       totbins++;
     }
+    /*for(int j=1; j<=nYbins; j++){
+      if(rebinnedHist->GetBinContent(i,j)<0.) negativebins++;
+      if(rebinnedHist->GetBinContent(i,j)<0.00001*averagebin) rebinnedHist->SetBinContent(i,j,0.00001*averagebin);
+    }*/
+  }
+  for(int i=1;i<=nXbins;i++){
     for(int j=1; j<=nYbins; j++){
       if(rebinnedHist->GetBinContent(i,j)<0.00001*averagebin) rebinnedHist->SetBinContent(i,j,0.00001*averagebin);
+      if(rebinnedHist->GetBinContent(i,j)<0.) negativebins++;
     }
   }
+
+  cout<<negativebins<<endl;
+  cout<<nXbins*nYbins<<endl;
 
   //Renormalize
   for(int i=1; i<=nXbins; i++){
     tempProj = (TH1F*) rebinnedHist->ProjectionY("tempProj",i,i);
     norm=tempProj->Integral();
-    if (norm>0) { // Avoid introducing NaNs in the histogram
+    if (norm!=0) { // Avoid introducing NaNs in the histogram
       for(int j=1; j<=nYbins; j++){
-	rebinnedHist->SetBinContent(i,j, rebinnedHist->GetBinContent(i,j)/norm   );
+      	rebinnedHist->SetBinContent(i,j, rebinnedHist->GetBinContent(i,j)/norm   );
       }
     }
   }
@@ -1069,7 +856,7 @@ TH2F* rebin_lowstatistics(TH2F* finalhist, int sampleIndex){
     }*/
 
   //qqZZ + WH + ZH
-  if(sampleIndex==2 || sampleIndex==5 || sampleIndex==6){
+  if(sampleIndex==2 || sampleIndex==5 || sampleIndex==6 || sampleIndex==8){
     //Tail smoothing goes here if needed
 
     //Fill each mass point with low or high mass projections
@@ -1096,6 +883,9 @@ TH2F* rebin_lowstatistics(TH2F* finalhist, int sampleIndex){
     }
     else if(sampleIndex==6){
       fWH->cd();
+    }
+    else if(sampleIndex==8){
+      fVBFBkg->cd();
     }
     lowProj->Write("H_low");
     highProj->Write("H_high");
@@ -1358,4 +1148,20 @@ void progressbar(int val, int tot){
     fflush(stdout);
     putchar('\r');        
   }
+}
+
+TH2F* makebkg(TH2F *SM1, TH2F *SM10, TH2F *SM25){
+  float denomscale = 60.-24.*sqrt(10.);
+
+  TH2F* madebkg = (TH2F*) SM1->Clone("madebkg");
+  madebkg->Scale(50.-25.*sqrt(10.));
+  madebkg->Add(SM10,20);
+  madebkg->Add(SM25,-10.+sqrt(10.));
+  //madebkg->Scale(-5.+sqrt(10.));
+  //madebkg->Add(SM10,4);
+  //madebkg->Add(SM25,-1.+sqrt(10.));
+  madebkg->Scale(1/denomscale);
+  //madebkg->Scale(1./madebkg->Integral());
+
+  return madebkg;
 }
