@@ -16,6 +16,7 @@ from gamma_H_HTO import gamma_H_HTO
 ## ------------------------------------
 
 HMP_flag = True
+
 newXSBR = True
 
 class datacardClass:
@@ -110,7 +111,7 @@ class datacardClass:
 
     
     # main datacard and workspace function
-    def makeCardsWorkspaces(self, theMH, theis2D, theOutputDir, theInputs,theTemplateDir="templates2D", theIncludingError=False, theMEKD=False, theVBFcat=False, theUse3D=False, theCSquared=1.0, theBRnew=0.):
+    def makeCardsWorkspaces(self, theMH, theis2D, theOutputDir, theInputs,theTemplateDir="templates2D", theIncludingError=False, theMEKD=False, theVBFcat=False, theUse3D=False, theCSquared=1.0, theBRnew=0.,theWriteWS=True):
 
         print "--> BSM parameters: ",theCSquared," ",theBRnew
         if round(float(theCSquared/(1-theBRnew)),2) > 1.:
@@ -217,29 +218,30 @@ class datacardClass:
             print "--> DEBUGGING MASS WINDOWS"
             print "standard windows: low_M = ",self.low_M,", high_M = ",self.high_M
 
-        windowRange = self.high_M-self.low_M
+# # Tentative rescaling of the mass window with cprime (abandoned)
+#         windowRange = self.high_M-self.low_M
         
-        if HMP_flag and self.mH>399.:
-            normRangeR = 3.
-            if self.mH<401.: normRangeR = 7.2
-            elif self.mH<451.: normRangeR = 6.3
-            elif self.mH<501.: normRangeR = 4.9
-            elif self.mH<551.: normRangeR = 4.3
-            elif self.mH<601.: normRangeR = 3.5 
-            elif self.mH<651.: normRangeR = 2.8
-            elif self.mH<701.: normRangeR = 2.5
-            elif self.mH<751.: normRangeR = 2.3
-            elif self.mH<801.: normRangeR = 1.8
-            elif self.mH<851.: normRangeR = 1.4
-            elif self.mH<901.: normRangeR = 1.3
-            elif self.mH<951.: normRangeR = 1.2
-            else: normRangeR = 1.
-            windowRange *= self.totWidthSF
-            self.high_M = self.mH + normRangeR*self.gamma_HM_BSM*self.totWidthSF
-            self.low_M  = max(260.,self.high_M - windowRange)
+#         if HMP_flag and self.mH>399.:
+#             normRangeR = 3.
+#             if self.mH<401.: normRangeR = 7.2
+#             elif self.mH<451.: normRangeR = 6.3
+#             elif self.mH<501.: normRangeR = 4.9
+#             elif self.mH<551.: normRangeR = 4.3
+#             elif self.mH<601.: normRangeR = 3.5 
+#             elif self.mH<651.: normRangeR = 2.8
+#             elif self.mH<701.: normRangeR = 2.5
+#             elif self.mH<751.: normRangeR = 2.3
+#             elif self.mH<801.: normRangeR = 1.8
+#             elif self.mH<851.: normRangeR = 1.4
+#             elif self.mH<901.: normRangeR = 1.3
+#             elif self.mH<951.: normRangeR = 1.2
+#             else: normRangeR = 1.
+#             windowRange *= self.totWidthSF
+#             self.high_M = self.mH + normRangeR*self.gamma_HM_BSM*self.totWidthSF
+#             self.low_M  = max(260.,self.high_M - windowRange)
             
 
-        if DEBUG: print "scaled mass windows: low_M = ",self.low_M,", high_M = ",self.high_M
+#         if DEBUG: print "scaled mass windows: low_M = ",self.low_M,", high_M = ",self.high_M
        
         if (self.channel == self.ID_4mu): self.appendName = '4mu'
         elif (self.channel == self.ID_4e): self.appendName = '4e'
@@ -534,7 +536,7 @@ class datacardClass:
             print "Defining RooRealVars for the parameters of the shape (High Mass paper)"
             rrv_brnew_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_brnew_BSM","CMS_zz4l_brnew_BSM",self.brnew_HM_BSM)
             rrv_csquared_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_csquared_BSM","CMS_zz4l_csquared_BSM",self.csquared_HM_BSM)
-            rrv_intStr_shape_HM_BSM = ROOT.RooRealVar("interf_ggH","CMS_zz4l_r_BSM",1.)
+            rrv_intStr_shape_HM_BSM = ROOT.RooRealVar("interf_ggH","CMS_zz4l_r_BSM",1.,0.,2.)
 
         
         ## --------------------- SHAPE FUNCTIONS ---------------------- ##
@@ -2752,6 +2754,7 @@ class datacardClass:
             
         ## --------------------------- WORKSPACE -------------------------- ##
 
+
         endsInP5 = False
         tmpMH = self.mH
         if ( math.fabs(math.floor(tmpMH)-self.mH) > 0.001): endsInP5 = True
@@ -2786,227 +2789,229 @@ class datacardClass:
             name_ShapeWS2 = "hzz4l_{0}S_{1:.0f}TeV_{2}.input.root".format(self.appendName,self.sqrts,self.VBFcat)
 
         if(DEBUG): print name_Shape,"  ",name_ShapeWS2
-        
-        w = ROOT.RooWorkspace("w","w")
-        
-        w.importClassCode(RooqqZZPdf_v2.Class(),True)
-        w.importClassCode(RooggZZPdf_v2.Class(),True)
-        w.importClassCode(RooRelBWUFParam.Class(),True)
-        w.importClassCode(RooDoubleCB.Class(),True)
-        w.importClassCode(RooFormulaVar.Class(),True)
-        if self.isHighMass :
-            w.importClassCode(RooRelBWHighMass.Class(),True)
-            if HMP_flag:
-                w.importClassCode(RooBWHighMassGGH.Class(),True)
-                w.importClassCode(RooCPSHighMassVBF.Class(),True)                
 
-        if( FactorizedShapes ):
-            if( self.channel == self.ID_4mu ):
-                w.importClassCode(RooFourMuMassShapePdf2.Class(),True)
-                w.importClassCode(RooFourMuMassRes.Class(),True)
-            elif( self.channel == self.ID_4e ):
-                w.importClassCode(RooFourEMassShapePdf2.Class(),True)
-                w.importClassCode(RooFourEMassRes.Class(),True)
-            elif( self.channel == self.ID_2e2mu ):
-                w.importClassCode(RooTwoETwoMuMassShapePdf2.Class(),True)
-                w.importClassCode(RooTwoETwoMuMassRes.Class(),True)
-            
-                
-                
-        getattr(w,'import')(data_obs,ROOT.RooFit.Rename("data_obs")) ### Should this be renamed?
-    
-        if(self.bUseCBnoConvolution) :
+        if theWriteWS:
+
+            w = ROOT.RooWorkspace("w","w")
+
+            w.importClassCode(RooqqZZPdf_v2.Class(),True)
+            w.importClassCode(RooggZZPdf_v2.Class(),True)
+            w.importClassCode(RooRelBWUFParam.Class(),True)
+            w.importClassCode(RooDoubleCB.Class(),True)
+            w.importClassCode(RooFormulaVar.Class(),True)
+            if self.isHighMass :
+                w.importClassCode(RooRelBWHighMass.Class(),True)
+                if HMP_flag:
+                    w.importClassCode(RooBWHighMassGGH.Class(),True)
+                    w.importClassCode(RooCPSHighMassVBF.Class(),True)                
+
+            if( FactorizedShapes ):
+                if( self.channel == self.ID_4mu ):
+                    w.importClassCode(RooFourMuMassShapePdf2.Class(),True)
+                    w.importClassCode(RooFourMuMassRes.Class(),True)
+                elif( self.channel == self.ID_4e ):
+                    w.importClassCode(RooFourEMassShapePdf2.Class(),True)
+                    w.importClassCode(RooFourEMassRes.Class(),True)
+                elif( self.channel == self.ID_2e2mu ):
+                    w.importClassCode(RooTwoETwoMuMassShapePdf2.Class(),True)
+                    w.importClassCode(RooTwoETwoMuMassRes.Class(),True)
+
+
+
+            getattr(w,'import')(data_obs,ROOT.RooFit.Rename("data_obs")) ### Should this be renamed?
+
+            if(self.bUseCBnoConvolution) :
+                if (self.is2D == 0):
+                    if not self.bIncludingError:
+                        signalCB_ggH.SetNameTitle("ggH","ggH")
+                        signalCB_VBF.SetNameTitle("qqH","qqH")
+                        signalCB_WH.SetNameTitle("WH","WH")
+                        signalCB_ZH.SetNameTitle("ZH","ZH")
+                        signalCB_ttH.SetNameTitle("ttH","ttH")
+
+                        getattr(w,'import')(signalCB_ggH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(signalCB_VBF, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(signalCB_WH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(signalCB_ZH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(signalCB_ttH, ROOT.RooFit.RecycleConflictNodes())
+                    else:
+                        sig_ggHErr.SetNameTitle("ggH","ggH")
+                        sig_VBFErr.SetNameTitle("qqH","qqH")
+                        sig_WHErr.SetNameTitle("WH","WH")
+                        sig_ZHErr.SetNameTitle("ZH","ZH")
+                        sig_ttHErr.SetNameTitle("ttH","ttH")
+
+                        getattr(w,'import')(sig_ggHErr, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_VBFErr, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_WHErr, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_ZHErr, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_ttHErr, ROOT.RooFit.RecycleConflictNodes())
+
+                if (self.is2D == 1):
+                    if not self.Use3D:
+                        sigCB2d_ggH.SetNameTitle("ggH","ggH")
+                        sigCB2d_VBF.SetNameTitle("qqH","qqH")
+                        sigCB2d_WH.SetNameTitle("WH","WH")
+                        sigCB2d_ZH.SetNameTitle("ZH","ZH")
+                        sigCB2d_ttH.SetNameTitle("ttH","ttH")
+
+                        getattr(w,'import')(sigCB2d_ggH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_VBF, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_WH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_ZH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_ttH, ROOT.RooFit.RecycleConflictNodes())
+                        if(self.isAltSig):
+                            sigCB2d_ggH_ALT.SetNameTitle("ggH{0}".format(self.appendHypType),"ggH{0}".format(self.appendHypType))
+                            getattr(w,'import')(sigCB2d_ggH_ALT, ROOT.RooFit.RecycleConflictNodes())
+
+                    else:
+                        sigCB2d_ggH_VBF_KD.SetNameTitle("ggH","ggH")
+                        sigCB2d_qqH_VBF_KD.SetNameTitle("qqH","qqH")
+                        sigCB2d_WH_VBF_KD.SetNameTitle("WH","WH")
+                        sigCB2d_ZH_VBF_KD.SetNameTitle("ZH","ZH")
+                        sigCB2d_ttH_VBF_KD.SetNameTitle("ttH","ttH")
+                        getattr(w,'import')(sigCB2d_ggH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_qqH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_WH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_ZH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sigCB2d_ttH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+
+                if (self.is2D == 2):
+                    sigTemplateSDPdf_ggH.SetNameTitle("ggH","ggH")
+                    sigTemplateSDPdf_VBF.SetNameTitle("qqH","qqH")
+                    sigTemplateSDPdf_WH.SetNameTitle("WH","WH")
+                    sigTemplateSDPdf_ZH.SetNameTitle("ZH","ZH")
+                    sigTemplateSDPdf_ttH.SetNameTitle("ttH","ttH")
+
+                    getattr(w,'import')(sigTemplateSDPdf_ggH, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_VBF, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_WH, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_ZH, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_ttH, ROOT.RooFit.RecycleConflictNodes())
+
+            else:
+
+                if (self.is2D == 0):
+
+                    if self.isHighMass:
+                        sig_ggH_HM.SetNameTitle("ggH","ggH")
+                        sig_VBF_HM.SetNameTitle("qqH","qqH")
+                        sig_WH_HM.SetNameTitle("WH","WH")
+                        sig_ZH_HM.SetNameTitle("ZH","ZH")
+                        sig_ttH_HM.SetNameTitle("ttH","ttH")
+
+                        getattr(w,'import')(sig_ggH_HM, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_VBF_HM, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_WH_HM, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_ZH_HM, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_ttH_HM, ROOT.RooFit.RecycleConflictNodes())
+
+                    else :
+                        sig_ggH.SetNameTitle("ggH","ggH")
+                        sig_VBF.SetNameTitle("qqH","qqH")
+                        sig_WH.SetNameTitle("WH","WH")
+                        sig_ZH.SetNameTitle("ZH","ZH")
+                        sig_ttH.SetNameTitle("ttH","ttH")
+
+                        getattr(w,'import')(sig_ggH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_VBF, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_WH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_ZH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig_ttH, ROOT.RooFit.RecycleConflictNodes())
+
+                if (self.is2D == 1):
+                    if not self.Use3D:
+                        sig2d_ggH.SetNameTitle("ggH","ggH")
+                        sig2d_VBF.SetNameTitle("qqH","qqH")
+                        sig2d_WH.SetNameTitle("WH","WH")
+                        sig2d_ZH.SetNameTitle("ZH","ZH")
+                        sig2d_ttH.SetNameTitle("ttH","ttH")
+
+                        getattr(w,'import')(sig2d_ggH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_VBF, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_WH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_ZH, ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_ttH, ROOT.RooFit.RecycleConflictNodes())
+                        if(self.isAltSig):
+                            sigCB2d_ggH_ALT.SetNameTitle("ggH{0}".format(self.appendHypType),"ggH{0}".format(self.appendHypType))
+                            getattr(w,'import')(sigCB2d_ggH_ALT, ROOT.RooFit.RecycleConflictNodes())
+
+                    else:
+                        sig2d_ggH_VBF_KD.SetNameTitle("ggH","ggH")
+                        sig2d_qqH_VBF_KD.SetNameTitle("qqH","qqH")
+                        sig2d_WH_VBF_KD.SetNameTitle("WH","WH")
+                        sig2d_ZH_VBF_KD.SetNameTitle("ZH","ZH")
+                        sig2d_ttH_VBF_KD.SetNameTitle("ttH","ttH")
+                        getattr(w,'import')(sig2d_ggH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_qqH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_WH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_ZH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                        getattr(w,'import')(sig2d_ttH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+
+                if (self.is2D == 2): 
+                    sigTemplateSDPdf_ggH.SetNameTitle("ggH","ggH")
+                    sigTemplateSDPdf_VBF.SetNameTitle("qqH","qqH")
+                    sigTemplateSDPdf_WH.SetNameTitle("WH","WH")
+                    sigTemplateSDPdf_ZH.SetNameTitle("ZH","ZH")
+                    sigTemplateSDPdf_ttH.SetNameTitle("ttH","ttH")
+
+                    getattr(w,'import')(sigTemplateSDPdf_ggH, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_VBF, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_WH, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_ZH, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(sigTemplateSDPdf_ttH, ROOT.RooFit.RecycleConflictNodes())
+
+
             if (self.is2D == 0):
-		if not self.bIncludingError:
-                	signalCB_ggH.SetNameTitle("ggH","ggH")
-                	signalCB_VBF.SetNameTitle("qqH","qqH")
-                	signalCB_WH.SetNameTitle("WH","WH")
-                	signalCB_ZH.SetNameTitle("ZH","ZH")
-                	signalCB_ttH.SetNameTitle("ttH","ttH")
-                
-                	getattr(w,'import')(signalCB_ggH, ROOT.RooFit.RecycleConflictNodes())
-                	getattr(w,'import')(signalCB_VBF, ROOT.RooFit.RecycleConflictNodes())
-               		getattr(w,'import')(signalCB_WH, ROOT.RooFit.RecycleConflictNodes())
-                	getattr(w,'import')(signalCB_ZH, ROOT.RooFit.RecycleConflictNodes())
-                	getattr(w,'import')(signalCB_ttH, ROOT.RooFit.RecycleConflictNodes())
-		else:
-                	sig_ggHErr.SetNameTitle("ggH","ggH")
-                	sig_VBFErr.SetNameTitle("qqH","qqH")
-                	sig_WHErr.SetNameTitle("WH","WH")
-                	sig_ZHErr.SetNameTitle("ZH","ZH")
-                	sig_ttHErr.SetNameTitle("ttH","ttH")
-                
-                	getattr(w,'import')(sig_ggHErr, ROOT.RooFit.RecycleConflictNodes())
-                	getattr(w,'import')(sig_VBFErr, ROOT.RooFit.RecycleConflictNodes())
-               		getattr(w,'import')(sig_WHErr, ROOT.RooFit.RecycleConflictNodes())
-                	getattr(w,'import')(sig_ZHErr, ROOT.RooFit.RecycleConflictNodes())
-                	getattr(w,'import')(sig_ttHErr, ROOT.RooFit.RecycleConflictNodes())
-                
+                if not self.bIncludingError:
+                    bkg_qqzz.SetNameTitle("bkg_qqzz","bkg_qqzz")
+                    bkg_ggzz.SetNameTitle("bkg_ggzz","bkg_ggzz")
+                    bkg_zjets.SetNameTitle("bkg_zjets","bkg_zjets")
+                    getattr(w,'import')(bkg_qqzz, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg_ggzz, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg_zjets, ROOT.RooFit.RecycleConflictNodes())
+                else:
+                    bkg_qqzzErr.SetNameTitle("bkg_qqzz","bkg_qqzz")
+                    bkg_ggzzErr.SetNameTitle("bkg_ggzz","bkg_ggzz")
+                    bkg_zjetsErr.SetNameTitle("bkg_zjets","bkg_zjets")
+                    getattr(w,'import')(bkg_qqzzErr, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg_ggzzErr, ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg_zjetsErr, ROOT.RooFit.RecycleConflictNodes())
+
             if (self.is2D == 1):
                 if not self.Use3D:
-                    sigCB2d_ggH.SetNameTitle("ggH","ggH")
-                    sigCB2d_VBF.SetNameTitle("qqH","qqH")
-                    sigCB2d_WH.SetNameTitle("WH","WH")
-                    sigCB2d_ZH.SetNameTitle("ZH","ZH")
-                    sigCB2d_ttH.SetNameTitle("ttH","ttH")
-                
-                    getattr(w,'import')(sigCB2d_ggH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_VBF, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_WH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_ZH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_ttH, ROOT.RooFit.RecycleConflictNodes())
-                    if(self.isAltSig):
-                        sigCB2d_ggH_ALT.SetNameTitle("ggH{0}".format(self.appendHypType),"ggH{0}".format(self.appendHypType))
-                        getattr(w,'import')(sigCB2d_ggH_ALT, ROOT.RooFit.RecycleConflictNodes())
-
+                    getattr(w,'import')(bkg2d_qqzz,ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg2d_ggzz,ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg2d_zjets,ROOT.RooFit.RecycleConflictNodes())
                 else:
-                    sigCB2d_ggH_VBF_KD.SetNameTitle("ggH","ggH")
-                    sigCB2d_qqH_VBF_KD.SetNameTitle("qqH","qqH")
-                    sigCB2d_WH_VBF_KD.SetNameTitle("WH","WH")
-                    sigCB2d_ZH_VBF_KD.SetNameTitle("ZH","ZH")
-                    sigCB2d_ttH_VBF_KD.SetNameTitle("ttH","ttH")
-                    getattr(w,'import')(sigCB2d_ggH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_qqH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_WH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_ZH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sigCB2d_ttH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-
-            if (self.is2D == 2):
-                sigTemplateSDPdf_ggH.SetNameTitle("ggH","ggH")
-                sigTemplateSDPdf_VBF.SetNameTitle("qqH","qqH")
-                sigTemplateSDPdf_WH.SetNameTitle("WH","WH")
-                sigTemplateSDPdf_ZH.SetNameTitle("ZH","ZH")
-                sigTemplateSDPdf_ttH.SetNameTitle("ttH","ttH")
-                
-                getattr(w,'import')(sigTemplateSDPdf_ggH, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_VBF, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_WH, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_ZH, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_ttH, ROOT.RooFit.RecycleConflictNodes())
-
-        else:
-                
-            if (self.is2D == 0):
-
-                if self.isHighMass:
-                    sig_ggH_HM.SetNameTitle("ggH","ggH")
-                    sig_VBF_HM.SetNameTitle("qqH","qqH")
-                    sig_WH_HM.SetNameTitle("WH","WH")
-                    sig_ZH_HM.SetNameTitle("ZH","ZH")
-                    sig_ttH_HM.SetNameTitle("ttH","ttH")
-                    
-                    getattr(w,'import')(sig_ggH_HM, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_VBF_HM, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_WH_HM, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_ZH_HM, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_ttH_HM, ROOT.RooFit.RecycleConflictNodes())
-
-                else :
-                    sig_ggH.SetNameTitle("ggH","ggH")
-                    sig_VBF.SetNameTitle("qqH","qqH")
-                    sig_WH.SetNameTitle("WH","WH")
-                    sig_ZH.SetNameTitle("ZH","ZH")
-                    sig_ttH.SetNameTitle("ttH","ttH")
-                    
-                    getattr(w,'import')(sig_ggH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_VBF, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_WH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_ZH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig_ttH, ROOT.RooFit.RecycleConflictNodes())
-                    
-            if (self.is2D == 1):
-                if not self.Use3D:
-                    sig2d_ggH.SetNameTitle("ggH","ggH")
-                    sig2d_VBF.SetNameTitle("qqH","qqH")
-                    sig2d_WH.SetNameTitle("WH","WH")
-                    sig2d_ZH.SetNameTitle("ZH","ZH")
-                    sig2d_ttH.SetNameTitle("ttH","ttH")
-                
-                    getattr(w,'import')(sig2d_ggH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_VBF, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_WH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_ZH, ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_ttH, ROOT.RooFit.RecycleConflictNodes())
-                    if(self.isAltSig):
-                        sigCB2d_ggH_ALT.SetNameTitle("ggH{0}".format(self.appendHypType),"ggH{0}".format(self.appendHypType))
-                        getattr(w,'import')(sigCB2d_ggH_ALT, ROOT.RooFit.RecycleConflictNodes())
-
-                else:
-                    sig2d_ggH_VBF_KD.SetNameTitle("ggH","ggH")
-                    sig2d_qqH_VBF_KD.SetNameTitle("qqH","qqH")
-                    sig2d_WH_VBF_KD.SetNameTitle("WH","WH")
-                    sig2d_ZH_VBF_KD.SetNameTitle("ZH","ZH")
-                    sig2d_ttH_VBF_KD.SetNameTitle("ttH","ttH")
-                    getattr(w,'import')(sig2d_ggH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_qqH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_WH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_ZH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                    getattr(w,'import')(sig2d_ttH_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                    bkg2d_qqZZ_VBF_KD.SetNameTitle("bkg2d_qqzz","bkg2d_qqzz")
+                    bkg2d_ggZZ_VBF_KD.SetNameTitle("bkg2d_ggzz","bkg2d_ggzz")
+                    bkg2d_ZX_VBF_KD.SetNameTitle("bkg2d_zjets","bkg2d_zjets")
+                    getattr(w,'import')(bkg2d_qqZZ_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg2d_ggZZ_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
+                    getattr(w,'import')(bkg2d_ZX_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
 
             if (self.is2D == 2): 
-                sigTemplateSDPdf_ggH.SetNameTitle("ggH","ggH")
-                sigTemplateSDPdf_VBF.SetNameTitle("qqH","qqH")
-                sigTemplateSDPdf_WH.SetNameTitle("WH","WH")
-                sigTemplateSDPdf_ZH.SetNameTitle("ZH","ZH")
-                sigTemplateSDPdf_ttH.SetNameTitle("ttH","ttH")
-                
-                getattr(w,'import')(sigTemplateSDPdf_ggH, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_VBF, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_WH, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_ZH, ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(sigTemplateSDPdf_ttH, ROOT.RooFit.RecycleConflictNodes())
+                bkgTemplateSDPdf_qqzz.SetNameTitle("bkg_qqzz","bkg_qqzz")
+                bkgTemplateSDPdf_ggzz.SetNameTitle("bkg_ggzz","bkg_ggzz")
+                bkgTemplateSDPdf_zjets.SetNameTitle("bkg_zjets","bkg_zjets")
+                getattr(w,'import')(bkgTemplateSDPdf_ggzz, ROOT.RooFit.RecycleConflictNodes())
+                getattr(w,'import')(bkgTemplateSDPdf_qqzz, ROOT.RooFit.RecycleConflictNodes())
+                getattr(w,'import')(bkgTemplateSDPdf_zjets, ROOT.RooFit.RecycleConflictNodes())
 
- 
-        if (self.is2D == 0):
-		if not self.bIncludingError:
-			bkg_qqzz.SetNameTitle("bkg_qqzz","bkg_qqzz")
-			bkg_ggzz.SetNameTitle("bkg_ggzz","bkg_ggzz")
-			bkg_zjets.SetNameTitle("bkg_zjets","bkg_zjets")
-            		getattr(w,'import')(bkg_qqzz, ROOT.RooFit.RecycleConflictNodes())
-            		getattr(w,'import')(bkg_ggzz, ROOT.RooFit.RecycleConflictNodes())
-            		getattr(w,'import')(bkg_zjets, ROOT.RooFit.RecycleConflictNodes())
-		else:
-			bkg_qqzzErr.SetNameTitle("bkg_qqzz","bkg_qqzz")
-			bkg_ggzzErr.SetNameTitle("bkg_ggzz","bkg_ggzz")
-			bkg_zjetsErr.SetNameTitle("bkg_zjets","bkg_zjets")
-            		getattr(w,'import')(bkg_qqzzErr, ROOT.RooFit.RecycleConflictNodes())
-            		getattr(w,'import')(bkg_ggzzErr, ROOT.RooFit.RecycleConflictNodes())
-            		getattr(w,'import')(bkg_zjetsErr, ROOT.RooFit.RecycleConflictNodes())
-            
-        if (self.is2D == 1):
-            if not self.Use3D:
-                getattr(w,'import')(bkg2d_qqzz,ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(bkg2d_ggzz,ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(bkg2d_zjets,ROOT.RooFit.RecycleConflictNodes())
-            else:
-                bkg2d_qqZZ_VBF_KD.SetNameTitle("bkg2d_qqzz","bkg2d_qqzz")
-                bkg2d_ggZZ_VBF_KD.SetNameTitle("bkg2d_ggzz","bkg2d_ggzz")
-                bkg2d_ZX_VBF_KD.SetNameTitle("bkg2d_zjets","bkg2d_zjets")
-                getattr(w,'import')(bkg2d_qqZZ_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(bkg2d_ggZZ_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
-                getattr(w,'import')(bkg2d_ZX_VBF_KD,ROOT.RooFit.RecycleConflictNodes())
 
-        if (self.is2D == 2): 
-            bkgTemplateSDPdf_qqzz.SetNameTitle("bkg_qqzz","bkg_qqzz")
-            bkgTemplateSDPdf_ggzz.SetNameTitle("bkg_ggzz","bkg_ggzz")
-            bkgTemplateSDPdf_zjets.SetNameTitle("bkg_zjets","bkg_zjets")
-            getattr(w,'import')(bkgTemplateSDPdf_ggzz, ROOT.RooFit.RecycleConflictNodes())
-            getattr(w,'import')(bkgTemplateSDPdf_qqzz, ROOT.RooFit.RecycleConflictNodes())
-            getattr(w,'import')(bkgTemplateSDPdf_zjets, ROOT.RooFit.RecycleConflictNodes())
+            getattr(w,'import')(rfvSigRate_ggH, ROOT.RooFit.RecycleConflictNodes())
+            getattr(w,'import')(rfvSigRate_VBF, ROOT.RooFit.RecycleConflictNodes())
+            getattr(w,'import')(rfvSigRate_WH, ROOT.RooFit.RecycleConflictNodes())
+            getattr(w,'import')(rfvSigRate_ZH, ROOT.RooFit.RecycleConflictNodes())
+            getattr(w,'import')(rfvSigRate_ttH, ROOT.RooFit.RecycleConflictNodes())
+            if(self.isAltSig):
+                rfvSigRate_ggH_ALT=ROOT.RooFormulaVar(rfvSigRate_ggH,"ggH{0}_norm".format(self.appendHypType))
+                print 'Compare signal rates: STD=',rfvSigRate_ggH.getVal(),"   ALT=",rfvSigRate_ggH_ALT.getVal()
+                getattr(w,'import')(rfvSigRate_ggH_ALT, ROOT.RooFit.RecycleConflictNodes())
 
-        
-        getattr(w,'import')(rfvSigRate_ggH, ROOT.RooFit.RecycleConflictNodes())
-        getattr(w,'import')(rfvSigRate_VBF, ROOT.RooFit.RecycleConflictNodes())
-        getattr(w,'import')(rfvSigRate_WH, ROOT.RooFit.RecycleConflictNodes())
-        getattr(w,'import')(rfvSigRate_ZH, ROOT.RooFit.RecycleConflictNodes())
-        getattr(w,'import')(rfvSigRate_ttH, ROOT.RooFit.RecycleConflictNodes())
-        if(self.isAltSig):
-            rfvSigRate_ggH_ALT=ROOT.RooFormulaVar(rfvSigRate_ggH,"ggH{0}_norm".format(self.appendHypType))
-            print 'Compare signal rates: STD=',rfvSigRate_ggH.getVal(),"   ALT=",rfvSigRate_ggH_ALT.getVal()
-            getattr(w,'import')(rfvSigRate_ggH_ALT, ROOT.RooFit.RecycleConflictNodes())
-            
-        w.writeToFile(name_ShapeWS)
-        w.writeToFile(name_ShapeWSXSBR)
+            w.writeToFile(name_ShapeWS)
+            w.writeToFile(name_ShapeWSXSBR)
         
         ## --------------------------- DATACARDS -------------------------- ##
 
