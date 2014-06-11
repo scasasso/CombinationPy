@@ -23,10 +23,10 @@
 #include "Config.h"
 
 //User determined Parameters
-const TString destDir = "../CreateDatacards/templates2D/TEST/";
+const TString destDir = "../CreateDatacards/templates2D/";
 int useSqrts=0;                                                   // 0=use 7+8TeV; 1=use 7TeV only, 2 use 8TeV only
 
-TString samples[11]={"ggF","VBF","qqZZ","ggZZ","Z+X","ZH","WH","ttH","VBF Bkg","VBF Bkg","VBF Bkg"};
+TString samples[9]={"ggF","VBF","qqZZ","ggZZ","Z+X","ZH","WH","ttH","VBF Bkg"};
 TString lowmassstr[2]={"Low Mass Region","High Mass Region"};
 TString updownstr[5]={"JEC down","Nominal","JEC up","Alt shape","Alt shape 2"};
 
@@ -326,39 +326,17 @@ void buildChain(TChain* bkgMC, int sampleIndex){
     bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_ZZJetsTo4L.root");
     bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_ZZJetsTo4L.root");
   }
-  else if(sampleIndex==8){ //Needs to be changed to more general location
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4mu.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4e.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_2e2mu.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4mu.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4e.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_2e2mu.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4mu.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4e.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_2e2mu.root");
-  }
-  else if(sampleIndex==9){ //Needs to be changed to more general location
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4mu10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4e10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4mu10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4e10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4mu10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4e10SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
-  }  
-  else if(sampleIndex==10){ //Needs to be changed to more general location
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4mu25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_4e25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4mu/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4mu25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_4e25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/4e/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4mu25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_4e25SM.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/2mu2e/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
-  }    
+  else if(sampleIndex==8){ //Will be updated if there is a final combination of all CJLST samples
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo4eJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo4muJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo4eJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo4muJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo4eJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo4muJJ_Contin.root");
+  }   
 }
 
 
@@ -531,43 +509,15 @@ void makeTemplate(int updown, bool debug){
     fttH->Close();
     
     // ==========================
-    // VBF qqZZ (This will be changed soon)
+    // VBF Bkg
     
     low = fillTemplate(8,true,updown);
     high = fillTemplate(8,false,updown);
     H_Djet = mergeTemplates(low,high);
-    
-    //if (!debug) smoothtemplates(H_Djet,8);
 
-    TH2F* SM1 = (TH2F*) H_Djet->Clone("SM1");
-
-    //TCanvas* c1 = new TCanvas("c1","c1",800,800);
-    //c1->cd();
-    //SM1->Draw("colz");
-
-    low = fillTemplate(9,true,updown);
-    high = fillTemplate(9,false,updown);
-    H_Djet = mergeTemplates(low,high);
-    
-    //if (!debug) smoothtemplates(H_Djet,9);
-
-    TH2F* SM10 = (TH2F*) H_Djet->Clone("SM10");
-
-    low = fillTemplate(10,true,updown);
-    high = fillTemplate(10,false,updown);
-    H_Djet = mergeTemplates(low,high);
-    
-    //if (!debug) smoothtemplates(H_Djet,10);
-
-    TH2F* SM25 = (TH2F*) H_Djet->Clone("SM25");
-
-    H_Djet = makebkg(SM1,SM10,SM25);
     if (!debug) smoothtemplates(H_Djet,8);
 
     fVBFBkg->cd();
-    SM1->Write("SM1");
-    SM10->Write("SM10");
-    SM25->Write("SM25");
     H_Djet->Write("H_Djet");
     fVBFBkg->Close();        
   }
@@ -676,10 +626,10 @@ TH2F* mergeTemplates(TH2F* lowTemp, TH2F* highTemp){
 //---------------------------------------------------
 
 TH2F* smoothtemplates(TH2F* inputdata, int sampleIndex){
-  if(sampleIndex<3){// || sampleIndex>7){
+  if(sampleIndex<3 || sampleIndex>7){
     rebin(inputdata,sampleIndex);
   }
-  else if(sampleIndex>2){// && sampleIndex<8){
+  else if(sampleIndex>2 && sampleIndex<8){
     rebin_lowstatistics(inputdata,sampleIndex);
   }
 
@@ -717,8 +667,8 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
     }
   }
 
-  cout<<negativebins2<<"/"<<nXbins*nYbins<<endl;
-  cout<<negativecolumns<<"/"<<nXbins<<endl;
+  cout<<"Initial bins, after normalization, with negative values: "<<negativebins2<<"/"<<nXbins*nYbins<<endl;
+  cout<<"Initial columns, after normalization, with negative values: "<<negativecolumns<<"/"<<nXbins<<endl;
 
   TH2F* origHist = new TH2F (*rebinnedHist);
 
@@ -796,10 +746,6 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
       averagebin+=rebinnedHist->GetBinContent(i,j);
       totbins++;
     }
-    /*for(int j=1; j<=nYbins; j++){
-      if(rebinnedHist->GetBinContent(i,j)<0.) negativebins++;
-      if(rebinnedHist->GetBinContent(i,j)<0.00001*averagebin) rebinnedHist->SetBinContent(i,j,0.00001*averagebin);
-    }*/
   }
   for(int i=1;i<=nXbins;i++){
     for(int j=1; j<=nYbins; j++){
@@ -808,8 +754,7 @@ TH2F* rebin(TH2F* rebinnedHist, int usealt){
     }
   }
 
-  cout<<negativebins<<endl;
-  cout<<nXbins*nYbins<<endl;
+  cout<<"Final bins with negative values: "<<negativebins<<"/"<<nXbins*nYbins<<endl;
 
   //Renormalize
   for(int i=1; i<=nXbins; i++){
@@ -864,7 +809,8 @@ TH2F* rebin_lowstatistics(TH2F* finalhist, int sampleIndex){
       for(int j=1; j<=nYbins;j++){
       	float binMzz = finalhist->GetBinCenter(i);
       	if (binMzz<180){
-      	  temp=lowProj->GetBinContent(j);
+      	  if(sampleIndex!=8) temp=lowProj->GetBinContent(j);
+          else if(sampleIndex==8) temp=highProj->GetBinContent(j);
       	  finalhist->SetBinContent(i,j,temp);
       	}
       	else if (binMzz>=180){
@@ -951,18 +897,6 @@ TH2F* altshapes(TH2F* original, int channel, int altnum){
 	 	 
 float altscale(float Djet,int channel, int altnum){
   float scale=0;
-  
-  //For testing
-  /*
-  if(altnum==1){
-    if(Djet<=0.5) scale=10.;
-    if(Djet>0.5) scale=0.1;
-  }
-  if(altnum==2){
-    if(Djet<=0.5) scale=0.1;
-    if(Djet>0.5) scale=10.;
-  }
-  */
 
   //ggH
   if(channel==0){
@@ -1095,11 +1029,8 @@ TH2F* mirrortemplates(int sampleIndex){
     for(int j=1;j<=origfisher->GetNbinsY();j++){
       float origval=origfisher->GetBinContent(i,j);
       float alt1val=altfisher->GetBinContent(i,j);
-      //cout<<origfisher->GetXaxis()->GetBinCenter(i)<<" "<<origfisher->GetYaxis()->GetBinCenter(j)<<" "<<origval<<" "<<alt1val<<endl;
       float scale=origval/alt1val;
       float alt2val=scale*origval;
-      //TH1F* origproj = (TH1F*) origfisher->GetProjection("origproj",i,i);
-      //TH1F* altproj = (TH1F*) altfisher->GetProjection("altproj",i,i);      
       alt2fisher->SetBinContent(i,j,alt2val);
     }
   }
@@ -1119,7 +1050,6 @@ TH2F* mirrortemplates(int sampleIndex){
       	alt2fisher->SetBinContent(i,j,alt2fisher->GetBinContent(i,j)/norm);
       }
     }
-    //if(norm==0.) cout<<"HERE?"<<endl;
   }
 
   TCanvas* c4 = new TCanvas("c4","c4",800,800);
