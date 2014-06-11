@@ -735,9 +735,9 @@ class systematicsClass:
             if theInputs['useCMS_zz4l_gamma']:
                 if not self.isHMP: theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
                 else:
-                    if self.mH<751: theFile.write("interf_ggH param 0 0.5 [-1,1] \n")
-                    elif self.mH<851: theFile.write("interf_ggH param 0 0.6 [-1,1] \n")
-                    else: theFile.write("interf_ggH param 0 0.65 [-1,1] \n")
+                    if self.mH<751: theFile.write("interf_ggH param 1 0.5 [-1,1] \n")
+                    elif self.mH<851: theFile.write("interf_ggH param 1 0.6 [-1,1] \n")
+                    else: theFile.write("interf_ggH param 1 0.65 [-1,1] \n")
             
         if( self.channel == self.ID_4e):
 
@@ -751,9 +751,9 @@ class systematicsClass:
             if theInputs['useCMS_zz4l_gamma']:
                 if not self.isHMP: theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
                 else:
-                    if self.mH<751: theFile.write("interf_ggH param 0 0.5 [-1,1] \n")
-                    elif self.mH<851: theFile.write("interf_ggH param 0 0.6 [-1,1] \n")
-                    else: theFile.write("interf_ggH param 0 0.65 [-1,1] \n")
+                    if self.mH<751: theFile.write("interf_ggH param 1 0.5 [-1,1] \n")
+                    elif self.mH<851: theFile.write("interf_ggH param 1 0.6 [-1,1] \n")
+                    else: theFile.write("interf_ggH param 1 0.65 [-1,1] \n")
 
             
         if( self.channel == self.ID_2e2mu):
@@ -771,6 +771,6 @@ class systematicsClass:
             if theInputs['useCMS_zz4l_gamma']:
                 if not self.isHMP: theFile.write("interf_ggH param 0 1 [-1,1] \n".format(self.channel,self.sqrts,Gamma_BW_errPerCent))
                 else:
-                    if self.mH<751: theFile.write("interf_ggH param 0 0.5 [-1,1] \n")
-                    elif self.mH<851: theFile.write("interf_ggH param 0 0.6 [-1,1] \n")
-                    else: theFile.write("interf_ggH param 0 0.65 [-1,1] \n")
+                    if self.mH<751: theFile.write("interf_ggH param 1 0.5 [-1,1] \n")
+                    elif self.mH<851: theFile.write("interf_ggH param 1 0.6 [-1,1] \n")
+                    else: theFile.write("interf_ggH param 1 0.65 [-1,1] \n")
