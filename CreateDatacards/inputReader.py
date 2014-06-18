@@ -34,8 +34,9 @@ class inputReader:
         self.WH_chan = False
         self.ZH_chan = False
         self.ttH_chan = False
-        self.qqZZ_chan = False
+        self.qqZZ_chan = False        
         self.ggZZ_chan = False
+        self.VBFZZ_chan = False
         self.zjets_chan = False
         self.ttbar_chan = False
         self.zbb_chan = False
@@ -47,11 +48,13 @@ class inputReader:
         # rates
         self.qqZZ_rate = -999.9
         self.ggZZ_rate = -999.9
+        self.VBFZZ_rate = -999.9
         self.zjets_rate = -999.9
         self.ttbar_rate = -999.9
         self.zbb_rate = -999.9
         self.qqZZ_lumi = -999.9
         self.ggZZ_lumi = -999.9
+        self.VBFZZ_lumi = -999.9
         self.zjets_lumi = -999.9
         self.ttbar_lumi = -999.9
         self.zbb_lumi = -999.9
@@ -70,6 +73,21 @@ class inputReader:
         self.mean_CB_shape_HM = -999.9
         self.sigma_CB_shape_HM = -999.9
         self.gamma_BW_shape_HM = -999.9
+        self.n_CB_ggHshape_HM = -999.9
+        self.alpha_CB_ggHshape_HM = -999.9
+        self.n2_CB_ggHshape_HM = -999.9
+        self.alpha2_CB_ggHshape_HM = -999.9
+        self.mean_CB_ggHshape_HM = -999.9
+        self.sigma_CB_ggHshape_HM = -999.9
+        self.gamma_BW_ggHshape_HM = -999.9
+        self.n_CB_VBFshape_HM = -999.9
+        self.alpha_CB_VBFshape_HM = -999.9
+        self.n2_CB_VBFshape_HM = -999.9
+        self.alpha2_CB_VBFshape_HM = -999.9
+        self.mean_CB_VBFshape_HM = -999.9
+        self.sigma_CB_VBFshape_HM = -999.9
+        self.gamma_BW_VBFshape_HM = -999.9
+        
         # signal efficiency params
         self.sigeff_a1 = -999.9
         self.sigeff_a2 = -999.9
@@ -156,6 +174,21 @@ class inputReader:
         self.ggZZshape_a7 = -999.9
         self.ggZZshape_a8 = -999.9
         self.ggZZshape_a9 = -999.9
+        # VBFZZ shape
+        self.VBFZZshape_a0 = -999.9
+        self.VBFZZshape_a1 = -999.9
+        self.VBFZZshape_a2 = -999.9
+        self.VBFZZshape_a3 = -999.9
+        self.VBFZZshape_a4 = -999.9
+        self.VBFZZshape_a5 = -999.9
+        self.VBFZZshape_a6 = -999.9
+        self.VBFZZshape_a7 = -999.9
+        self.VBFZZshape_a8 = -999.9
+        self.VBFZZshape_a9 = -999.9
+        self.VBFZZshape_a10 = -999.9
+        self.VBFZZshape_a11 = -999.9
+        self.VBFZZshape_a12 = -999.9
+        self.VBFZZshape_a13 = -999.9        
         # zjets shape
         self.zjetsShape_mean_3P1F = -999.9
         self.zjetsShape_sigma_3P1F = -999.9
@@ -309,6 +342,7 @@ class inputReader:
                     elif chan.lower().startswith("tth"):   self.ttH_chan = True
                     elif chan.lower().startswith("qqzz"):  self.qqZZ_chan = True
                     elif chan.lower().startswith("ggzz"):  self.ggZZ_chan = True
+                    elif chan.lower().startswith("vbfzz"):  self.vbfggZZ_chan = True
                     elif chan.lower().startswith("zjets"): self.zjets_chan = True
                     elif chan.lower().startswith("ttbar"): self.ttbar_chan = True
                     elif chan.lower().startswith("zbb"):   self.zbb_chan = True
@@ -324,6 +358,9 @@ class inputReader:
                 if f[1].lower().startswith("ggzz"):
                     self.ggZZ_rate = float(f[2])
                     if len(f) == 4: self.ggZZ_lumi = float(f[3])
+                if f[1].lower().startswith("vbfzz"):
+                    self.VBFZZ_rate = float(f[2])
+                    if len(f) == 4: self.ggZZ_lumi = float(f[3])                    
                 if f[1].lower().startswith("zjets"):
                     self.zjets_rate = float(f[2])
                     if len(f) == 4: self.zjets_lumi = float(f[3])
@@ -373,7 +410,58 @@ class inputReader:
                     if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
                     else: self.mekd_sig_a4_shape = f[2]
 
-            if f[0].lower().startswith("highmasssignalshape") or f[0].lower().startswith("hmsignalshape"):
+            # ggH shapes
+            if f[0].lower().startswith("highmasssignalshapeggh") or f[0].lower().startswith("hmsignalshapeggh"):
+
+                if f[1].lower().startswith("n_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.n_CB_ggHshape_HM = f[2]
+                if f[1].lower().startswith("alpha_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.alpha_CB_ggHshape_HM = f[2]
+                if f[1].lower().startswith("n2_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.n2_CB_ggHshape_HM = f[2]
+                if f[1].lower().startswith("alpha2_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.alpha2_CB_ggHshape_HM = f[2]
+                if f[1].lower().startswith("mean_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.mean_CB_ggHshape_HM = f[2]
+                if f[1].lower().startswith("sigma_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.sigma_CB_ggHshape_HM = f[2]
+                if f[1].lower().startswith("gamma_bw"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.gamma_BW_ggHshape_HM = f[2]
+
+            # VBF shapes
+            if f[0].lower().startswith("highmasssignalshapevbf") or f[0].lower().startswith("hmsignalshapevbf"):
+
+                if f[1].lower().startswith("n_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.n_CB_VBFshape_HM = f[2]
+                if f[1].lower().startswith("alpha_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.alpha_CB_VBFshape_HM = f[2]
+                if f[1].lower().startswith("n2_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.n2_CB_VBFshape_HM = f[2]
+                if f[1].lower().startswith("alpha2_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.alpha2_CB_VBFshape_HM = f[2]
+                if f[1].lower().startswith("mean_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.mean_CB_VBFshape_HM = f[2]
+                if f[1].lower().startswith("sigma_cb"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.sigma_CB_VBFshape_HM = f[2]
+                if f[1].lower().startswith("gamma_bw"): 
+                    if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
+                    else: self.gamma_BW_VBFshape_HM = f[2]
+            
+            # generic, no splitting in production mechanism 
+            if (f[0].lower().startswith("highmasssignalshape") or f[0].lower().startswith("hmsignalshape")) and not (f[0].lower().startswith("highmasssignalshapeggh") or f[0].lower().startswith("hmsignalshapeggh")) and not (f[0].lower().startswith("highmasssignalshapevbf") or f[0].lower().startswith("hmsignalshapevbf")):
 
                 if f[1].lower().startswith("n_cb"): 
                     if len(f) > 3 : raise RuntimeError, "{0} has a space in the formula!  Please check!".format(f[1])
@@ -532,6 +620,24 @@ class inputReader:
                 if f[1].lower().startswith("a7"): self.ggZZshape_a7 = float(f[2])
                 if f[1].lower().startswith("a8"): self.ggZZshape_a8 = float(f[2])
                 if f[1].lower().startswith("a9"): self.ggZZshape_a9 = float(f[2])
+
+            if f[0].lower().startswith("vbfzzshape"):
+
+                if f[1].lower().startswith("a0"): self.VBFZZshape_a0 = float(f[2])
+                if f[1].lower().startswith("a1_") or f[1].lower().startswith("a1 "): self.VBFZZshape_a1 = float(f[2])
+                if f[1].lower().startswith("a2"): self.VBFZZshape_a2 = float(f[2])
+                if f[1].lower().startswith("a3"): self.VBFZZshape_a3 = float(f[2])
+                if f[1].lower().startswith("a4"): self.VBFZZshape_a4 = float(f[2])
+                if f[1].lower().startswith("a5"): self.VBFZZshape_a5 = float(f[2])
+                if f[1].lower().startswith("a6"): self.VBFZZshape_a6 = float(f[2])
+                if f[1].lower().startswith("a7"): self.VBFZZshape_a7 = float(f[2])
+                if f[1].lower().startswith("a8"): self.VBFZZshape_a8 = float(f[2])
+                if f[1].lower().startswith("a9"): self.VBFZZshape_a9 = float(f[2])
+                if f[1].lower().startswith("a10"): self.VBFZZshape_a10 = float(f[2])
+                if f[1].lower().startswith("a11"): self.VBFZZshape_a11 = float(f[2])
+                if f[1].lower().startswith("a12"): self.VBFZZshape_a12 = float(f[2])
+                if f[1].lower().startswith("a13"): self.VBFZZshape_a13 = float(f[2])
+                
                
             if f[0].lower().startswith("zjetsshape"):
 
@@ -688,6 +794,7 @@ class inputReader:
 
         if self.qqZZ_chan and not self.goodEntry(self.qqZZ_rate): raise RuntimeError, "{0} is not set.  Check inputs!".format("qqZZ_rate")
         if self.ggZZ_chan and not self.goodEntry(self.ggZZ_rate): raise RuntimeError, "{0} is not set.  Check inputs!".format("ggZZ_rate")
+        if self.VBFZZ_chan and not self.goodEntry(self.VBFZZ_rate): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZ_rate")        
         if self.zjets_chan and not self.goodEntry(self.zjets_rate): raise RuntimeError, "{0} is not set.  Check inputs!".format("zjets_rate")
         if self.zbb_chan and not self.goodEntry(self.zbb_rate): raise RuntimeError, "{0} is not set.  Check inputs!".format("zbb_rate")
         if self.ttbar_chan and not self.goodEntry(self.ttbar_rate): raise RuntimeError, "{0} is not set.  Check inputs!".format("ttbar_rate")
@@ -712,21 +819,56 @@ class inputReader:
         if not self.goodEntry(self.alpha2_CB_shape_HM):
             print "{0} is not set. Using {1} for {0}.".format("alpha2_CB_shape_HM","alpha2_CB_shape")
             self.alpha2_CB_shape_HM = self.alpha2_CB_shape
-        if not self.goodEntry(self.n_CB_shape_HM):
-            print "{0} is not set. Using {1} for {0}.".format("n_CB_shape_HM","n_CB_shape")
-            self.n_CB_shape_HM = self.n_CB_shape
-        if not self.goodEntry(self.alpha_CB_shape_HM):
-            print "{0} is not set. Using {1} for {0}.".format("alpha_CB_shape_HM","alpha_CB_shape")
-            self.alpha_CB_shape_HM = self.alpha_CB_shape
         if not self.goodEntry(self.mean_CB_shape_HM):
             print "{0} is not set. Using {1} for {0}.".format("mean_CB_shape_HM","mean_CB_shape")
             self.mean_CB_shape_HM = self.mean_CB_shape
         if not self.goodEntry(self.sigma_CB_shape_HM):
             print "{0} is not set. Using {1} for {0}.".format("sigma_CB_shape_HM","sigma_CB_shape")
             self.sigma_CB_shape_HM = self.sigma_CB_shape
+
+        if not self.goodEntry(self.n_CB_ggHshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("n_CB_ggHshape_HM","n_CB_ggHshape")
+            self.n_CB_ggHshape_HM = self.n_CB_ggHshape
+        if not self.goodEntry(self.alpha_CB_ggHshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("alpha_CB_ggHshape_HM","alpha_CB_ggHshape")
+            self.alpha_CB_ggHshape_HM = self.alpha_CB_ggHshape
+        if not self.goodEntry(self.n2_CB_ggHshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("n2_CB_ggHshape_HM","n2_CB_ggHshape")
+            self.n2_CB_ggHshape_HM = self.n2_CB_ggHshape
+        if not self.goodEntry(self.alpha2_CB_ggHshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("alpha2_CB_ggHshape_HM","alpha2_CB_ggHshape")
+            self.alpha2_CB_ggHshape_HM = self.alpha2_CB_ggHshape
+        if not self.goodEntry(self.mean_CB_ggHshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("mean_CB_ggHshape_HM","mean_CB_ggHshape")
+            self.mean_CB_ggHshape_HM = self.mean_CB_ggHshape
+        if not self.goodEntry(self.sigma_CB_ggHshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("sigma_CB_ggHshape_HM","sigma_CB_ggHshape")
+            self.sigma_CB_ggHshape_HM = self.sigma_CB_ggHshape
+
+        if not self.goodEntry(self.n_CB_VBFshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("n_CB_VBFshape_HM","n_CB_VBFshape")
+            self.n_CB_VBFshape_HM = self.n_CB_VBFshape
+        if not self.goodEntry(self.alpha_CB_VBFshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("alpha_CB_VBFshape_HM","alpha_CB_VBFshape")
+            self.alpha_CB_VBFshape_HM = self.alpha_CB_VBFshape
+        if not self.goodEntry(self.n2_CB_VBFshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("n2_CB_VBFshape_HM","n2_CB_VBFshape")
+            self.n2_CB_VBFshape_HM = self.n2_CB_VBFshape
+        if not self.goodEntry(self.alpha2_CB_VBFshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("alpha2_CB_VBFshape_HM","alpha2_CB_VBFshape")
+            self.alpha2_CB_VBFshape_HM = self.alpha2_CB_VBFshape
+        if not self.goodEntry(self.mean_CB_VBFshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("mean_CB_VBFshape_HM","mean_CB_VBFshape")
+            self.mean_CB_VBFshape_HM = self.mean_CB_VBFshape
+        if not self.goodEntry(self.sigma_CB_VBFshape_HM):
+            print "{0} is not set. Using {1} for {0}.".format("sigma_CB_VBFshape_HM","sigma_CB_VBFshape")
+            self.sigma_CB_VBFshape_HM = self.sigma_CB_VBFshape
+            
                         
         # if not self.goodEntry(self.gamma_BW_shape_HM): raise RuntimeError, "{0} is not set.  Check inputs!".format("gamma_BW_shape_HM") ## FIXME: need to get rid of this
         self.gamma_BW_shape_HM = "(TMath::Max((-151.23)+(0.566127*@0)+(-0.000313658*@0*@0),20))" ##FIXME: this is dummy placeholder!
+        self.gamma_BW_ggHshape_HM = "(TMath::Max((-151.23)+(0.566127*@0)+(-0.000313658*@0*@0),20))" ##FIXME: this is dummy placeholder!
+        self.gamma_BW_VBFshape_HM = "(TMath::Max((-151.23)+(0.566127*@0)+(-0.000313658*@0*@0),20))" ##FIXME: this is dummy placeholder!        
 
         if not self.goodEntry(self.sigeff_a1): raise RuntimeError, "{0} is not set.  Check inputs!".format("sigEff_a1")
         if not self.goodEntry(self.sigeff_a2): raise RuntimeError, "{0} is not set.  Check inputs!".format("sigEff_a2")
@@ -809,6 +951,21 @@ class inputReader:
         if not self.goodEntry(self.ggZZshape_a8): raise RuntimeError, "{0} is not set.  Check inputs!".format("ggZZshape_a8")
         if not self.goodEntry(self.ggZZshape_a9): raise RuntimeError, "{0} is not set.  Check inputs!".format("ggZZshape_a9")
 
+        if not self.goodEntry(self.VBFZZshape_a0): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a0")
+        if not self.goodEntry(self.VBFZZshape_a1): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a1")
+        if not self.goodEntry(self.VBFZZshape_a2): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a2")
+        if not self.goodEntry(self.VBFZZshape_a3): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a3")
+        if not self.goodEntry(self.VBFZZshape_a4): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a4")
+        if not self.goodEntry(self.VBFZZshape_a5): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a5")
+        if not self.goodEntry(self.VBFZZshape_a6): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a6")
+        if not self.goodEntry(self.VBFZZshape_a7): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a7")
+        if not self.goodEntry(self.VBFZZshape_a8): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a8")
+        if not self.goodEntry(self.VBFZZshape_a9): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a9")
+        if not self.goodEntry(self.VBFZZshape_a10): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a10")
+        if not self.goodEntry(self.VBFZZshape_a11): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a11")
+        if not self.goodEntry(self.VBFZZshape_a12): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a12")
+        if not self.goodEntry(self.VBFZZshape_a13): raise RuntimeError, "{0} is not set.  Check inputs!".format("VBFZZshape_a13")        
+
         if not self.goodEntry(self.zjetsShape_mean_3P1F): raise RuntimeError, "{0} is not set.  Check inputs!".format("zjetsShape_mean_3P1F")
         if not self.goodEntry(self.zjetsShape_sigma_3P1F): raise RuntimeError, "{0} is not set.  Check inputs!".format("zjetsShape_sigma_3P1F")
         if not self.goodEntry(self.zjetsShape_norm_3P1F): raise RuntimeError, "{0} is not set.  Check inputs!".format("zjetsShape_norm_3P1F")
@@ -824,6 +981,7 @@ class inputReader:
 
         if not self.goodEntry(self.qqZZ_lumi):  self.qqZZ_lumi = self.lumi
         if not self.goodEntry(self.ggZZ_lumi):  self.ggZZ_lumi = self.lumi
+        if not self.goodEntry(self.VBFZZ_lumi):  self.VBFZZ_lumi = self.lumi        
         if not self.goodEntry(self.zjets_lumi): self.zjets_lumi = self.lumi
         if not self.goodEntry(self.zbb_lumi):   self.zbb_lumi = self.lumi
         if not self.goodEntry(self.ttbar_lumi): self.ttbar_lumi = self.lumi
@@ -879,18 +1037,21 @@ class inputReader:
         dict['ttH_SM'] = self.ttH_chan
         dict['qqZZ'] = self.qqZZ_chan
         dict['ggZZ'] = self.ggZZ_chan
+        dict['VBFZZ'] = self.VBFZZ_chan        
         dict['zjets'] = self.zjets_chan
         dict['ttbar'] = self.ttbar_chan
         dict['zbb'] = self.zbb_chan
        
         dict['qqZZ_rate'] = self.qqZZ_rate
         dict['ggZZ_rate'] = self.ggZZ_rate
+        dict['VBFZZ_rate'] = self.VBFZZ_rate        
         dict['zjets_rate'] = self.zjets_rate
         dict['ttbar_rate'] = self.ttbar_rate
         dict['zbb_rate'] = self.zbb_rate
 
         dict['qqZZ_lumi'] = float(self.qqZZ_lumi)
-        dict['ggZZ_lumi'] = float(self.ggZZ_lumi) 
+        dict['ggZZ_lumi'] = float(self.ggZZ_lumi)
+        dict['VBFZZ_lumi'] = float(self.VBFZZ_lumi)         
         dict['zjets_lumi'] = float(self.zjets_lumi)
         dict['ttbar_lumi'] = float(self.ttbar_lumi)
         dict['zbb_lumi'] = float(self.zbb_lumi)
@@ -910,6 +1071,20 @@ class inputReader:
         dict['mean_CB_shape_HM'] = self.mean_CB_shape_HM
         dict['sigma_CB_shape_HM'] = self.sigma_CB_shape_HM
         dict['gamma_BW_shape_HM'] = self.gamma_BW_shape_HM
+        dict['n_CB_ggHshape_HM'] = self.n_CB_ggHshape_HM
+        dict['alpha_CB_ggHshape_HM'] = self.alpha_CB_ggHshape_HM
+        dict['n2_CB_ggHshape_HM'] = self.n2_CB_ggHshape_HM
+        dict['alpha2_CB_ggHshape_HM'] = self.alpha2_CB_ggHshape_HM
+        dict['mean_CB_ggHshape_HM'] = self.mean_CB_ggHshape_HM
+        dict['sigma_CB_ggHshape_HM'] = self.sigma_CB_ggHshape_HM
+        dict['gamma_BW_ggHshape_HM'] = self.gamma_BW_ggHshape_HM
+        dict['n_CB_VBFshape_HM'] = self.n_CB_VBFshape_HM
+        dict['alpha_CB_VBFshape_HM'] = self.alpha_CB_VBFshape_HM
+        dict['n2_CB_VBFshape_HM'] = self.n2_CB_VBFshape_HM
+        dict['alpha2_CB_VBFshape_HM'] = self.alpha2_CB_VBFshape_HM
+        dict['mean_CB_VBFshape_HM'] = self.mean_CB_VBFshape_HM
+        dict['sigma_CB_VBFshape_HM'] = self.sigma_CB_VBFshape_HM
+        dict['gamma_BW_VBFshape_HM'] = self.gamma_BW_VBFshape_HM
 
         dict['sigEff_a1'] = float(self.sigeff_a1)
         dict['sigEff_a2'] = float(self.sigeff_a2)
@@ -1002,6 +1177,21 @@ class inputReader:
         dict['ggZZshape_a7'] = float(self.ggZZshape_a7)
         dict['ggZZshape_a8'] = float(self.ggZZshape_a8)
         dict['ggZZshape_a9'] = float(self.ggZZshape_a9)
+
+        dict['VBFZZshape_a0'] = float(self.VBFZZshape_a0)
+        dict['VBFZZshape_a1'] = float(self.VBFZZshape_a1)
+        dict['VBFZZshape_a2'] = float(self.VBFZZshape_a2)
+        dict['VBFZZshape_a3'] = float(self.VBFZZshape_a3)
+        dict['VBFZZshape_a4'] = float(self.VBFZZshape_a4)
+        dict['VBFZZshape_a5'] = float(self.VBFZZshape_a5)
+        dict['VBFZZshape_a6'] = float(self.VBFZZshape_a6)
+        dict['VBFZZshape_a7'] = float(self.VBFZZshape_a7)
+        dict['VBFZZshape_a8'] = float(self.VBFZZshape_a8)
+        dict['VBFZZshape_a9'] = float(self.VBFZZshape_a9)
+        dict['VBFZZshape_a10'] = float(self.VBFZZshape_a10)
+        dict['VBFZZshape_a11'] = float(self.VBFZZshape_a11)
+        dict['VBFZZshape_a12'] = float(self.VBFZZshape_a12)
+        dict['VBFZZshape_a13'] = float(self.VBFZZshape_a13)        
 
         dict['zjetsShape_mean_3P1F'] = float(self.zjetsShape_mean_3P1F)
         dict['zjetsShape_sigma_3P1F'] = float(self.zjetsShape_sigma_3P1F)

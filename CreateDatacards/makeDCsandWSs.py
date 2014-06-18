@@ -29,7 +29,7 @@ def parseOptions():
     parser.add_option('-j', '--jet', dest='useJET', type='int', default=0, help='useJET (default:0)')
     parser.add_option('-c', '--csquared',   dest='csquared',       type='float',    default=1.0,     help='C^2 value (default:1.0)')
     parser.add_option('-r', '--brnew',   dest='brnew',       type='float',    default=0.0,     help='BR_new value (default:0)')
-    parser.add_option('-w', action='store_false', dest='writeWS', default=True ,help='Write workspace files. If False writes only datacards')    
+    parser.add_option('-w', action='store_false', dest='writeWS', default=True ,help='Do not write workspace files. If fired writes only datacards')    
 
     
     # store options and arguments as global variables
@@ -85,9 +85,13 @@ def creationLoop(directory):
 #     stepSizes=[ 0.5, 0.5 ]
 #     endVal=[ 1, 1 ]
 
-    startMass=[ 900.0 ]
+    startMass=[ 800.0 ]
     stepSizes=[  100.0 ]
     endVal   =[   1  ]
+
+#     startMass=[ 900.0 ]
+#     stepSizes=[  100.0 ]
+#     endVal   =[   1  ]
 
 #     startMass=[ 800.0 ]
 #     stepSizes=[  100.0 ]

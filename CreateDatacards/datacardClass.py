@@ -87,11 +87,12 @@ class datacardClass:
                 totXs=0
                 for ch in range(1,6):
                     totXs+=myCSWrhf.HiggsCS(ch, mHVal, self.sqrts)
-                    if HMP_flag: totXs*=self.totXsSF
+                    #if HMP_flag: totXs*=self.totXsSF
                 histXsBr.SetBinContent(i, totXs * BR)
             else:
-                if not HMP_flag: histXsBr.SetBinContent(i, myCSWrhf.HiggsCS(signalProc, mHVal, self.sqrts) * BR)
-                else: histXsBr.SetBinContent(i, self.totXsSF*myCSWrhf.HiggsCS(signalProc, mHVal, self.sqrts) * BR)
+                histXsBr.SetBinContent(i, myCSWrhf.HiggsCS(signalProc, mHVal, self.sqrts) * BR)
+                #if not HMP_flag: histXsBr.SetBinContent(i, myCSWrhf.HiggsCS(signalProc, mHVal, self.sqrts) * BR)
+                #else: histXsBr.SetBinContent(i, self.totXsSF*myCSWrhf.HiggsCS(signalProc, mHVal, self.sqrts) * BR)
 
             #print '\nmakeXsBrFunction : procName=',procName,'   signalProc=',signalProc,'  mH (input)=',rrvMH.getVal(),
             #print '   CS=',myCSWrhf.HiggsCS(signalProc, mHVal, self.sqrts),'   BR=',BR
@@ -113,10 +114,11 @@ class datacardClass:
     # main datacard and workspace function
     def makeCardsWorkspaces(self, theMH, theis2D, theOutputDir, theInputs,theTemplateDir="templates2D", theIncludingError=False, theMEKD=False, theVBFcat=False, theUse3D=False, theCSquared=1.0, theBRnew=0.,theWriteWS=True):
 
-        print "--> BSM parameters: ",theCSquared," ",theBRnew
-        if round(float(theCSquared/(1-theBRnew)),2) > 1.:
-            print "[makeCardsWorkspaces]: This point of the parameter space is not covered in the search: Gamma/Gamma_SM = ",round(float(theCSquared/(1-theBRnew)),2)," > 1."
-            exit(1)
+        if HMP_flag:
+            print "--> BSM parameters: ",theCSquared," ",theBRnew
+            if round(float(theCSquared/(1-theBRnew)),2) > 1.:
+                print "[makeCardsWorkspaces]: This point of the parameter space is not covered in the search: Gamma/Gamma_SM = ",round(float(theCSquared/(1-theBRnew)),2)," > 1."
+                exit(1)
 
 
         ## --------------- SETTINGS AND DECLARATIONS --------------- ##
@@ -153,6 +155,7 @@ class datacardClass:
         self.ttH_chan = theInputs['ttH']
         self.qqZZ_chan = theInputs['qqZZ']
         self.ggZZ_chan = theInputs['ggZZ']
+        # self.VBFZZ_chan = theInputs['VBFZZ']
         self.zjets_chan = theInputs['zjets']
         self.ttbar_chan = theInputs['ttbar']
         self.zbb_chan = theInputs['zbb']
@@ -218,30 +221,6 @@ class datacardClass:
             print "--> DEBUGGING MASS WINDOWS"
             print "standard windows: low_M = ",self.low_M,", high_M = ",self.high_M
 
-# # Tentative rescaling of the mass window with cprime (abandoned)
-#         windowRange = self.high_M-self.low_M
-        
-#         if HMP_flag and self.mH>399.:
-#             normRangeR = 3.
-#             if self.mH<401.: normRangeR = 7.2
-#             elif self.mH<451.: normRangeR = 6.3
-#             elif self.mH<501.: normRangeR = 4.9
-#             elif self.mH<551.: normRangeR = 4.3
-#             elif self.mH<601.: normRangeR = 3.5 
-#             elif self.mH<651.: normRangeR = 2.8
-#             elif self.mH<701.: normRangeR = 2.5
-#             elif self.mH<751.: normRangeR = 2.3
-#             elif self.mH<801.: normRangeR = 1.8
-#             elif self.mH<851.: normRangeR = 1.4
-#             elif self.mH<901.: normRangeR = 1.3
-#             elif self.mH<951.: normRangeR = 1.2
-#             else: normRangeR = 1.
-#             windowRange *= self.totWidthSF
-#             self.high_M = self.mH + normRangeR*self.gamma_HM_BSM*self.totWidthSF
-#             self.low_M  = max(260.,self.high_M - windowRange)
-            
-
-#         if DEBUG: print "scaled mass windows: low_M = ",self.low_M,", high_M = ",self.high_M
        
         if (self.channel == self.ID_4mu): self.appendName = '4mu'
         elif (self.channel == self.ID_4e): self.appendName = '4e'
@@ -272,11 +251,13 @@ class datacardClass:
         if self.isAltSig and self.appendHypType=="" :
             self.appendHypType = "_ALT"
             
-        
+
+        isBSM = False
+        if HMP_flag and (self.brnew_HM_BSM!=0. or self.csquared_HM_BSM!=1.): isBSM = True
         ## ------------------------- SYSTEMATICS CLASSES ----------------------------- ##
     
-        systematics = systematicsClass( self.mH, False, self.isFSR, theInputs,HMP_flag)
-        systematics_forXSxBR = systematicsClass( self.mH, True, self.isFSR,theInputs,HMP_flag)
+        systematics = systematicsClass( self.mH, False, self.isFSR, theInputs,HMP_flag,isBSM)
+        systematics_forXSxBR = systematicsClass( self.mH, True, self.isFSR,theInputs,HMP_flag,isBSM)
 
         ## -------------------------- SIGNAL SHAPE ----------------------------------- ##
     
@@ -427,72 +408,159 @@ class datacardClass:
         rfv_alpha2_CB = ROOT.RooFormulaVar()
         rfv_mean_CB = ROOT.RooFormulaVar()
         rfv_sigma_CB = ROOT.RooFormulaVar()
+        
+        rfv_n_ggHCB = ROOT.RooFormulaVar()
+        rfv_alpha_ggHCB = ROOT.RooFormulaVar()
+        rfv_n2_ggHCB = ROOT.RooFormulaVar()
+        rfv_alpha2_ggHCB = ROOT.RooFormulaVar()
+        rfv_mean_ggHCB = ROOT.RooFormulaVar()
+        rfv_sigma_ggHCB = ROOT.RooFormulaVar()
+
+        rfv_n_VBFCB = ROOT.RooFormulaVar()
+        rfv_alpha_VBFCB = ROOT.RooFormulaVar()
+        rfv_n2_VBFCB = ROOT.RooFormulaVar()
+        rfv_alpha2_VBFCB = ROOT.RooFormulaVar()
+        rfv_mean_VBFCB = ROOT.RooFormulaVar()
+        rfv_sigma_VBFCB = ROOT.RooFormulaVar()
+
+
+        if DEBUG:
+            print "Debugging inputs for the resolution function split in production mechanism:"
+            print "inclusive -> ",theInputs['n_CB_shape_HM']," / ",theInputs['alpha_CB_shape_HM']," / ",theInputs['n2_CB_shape_HM']," / ",theInputs['alpha2_CB_shape_HM']," / ",theInputs['mean_CB_shape_HM']," / ",theInputs['sigma_CB_shape_HM']," / "            
+            print "ggH -> ",theInputs['n_CB_ggHshape_HM']," / ",theInputs['alpha_CB_ggHshape_HM']," / ",theInputs['n2_CB_ggHshape_HM']," / ",theInputs['alpha2_CB_ggHshape_HM']," / ",theInputs['mean_CB_ggHshape_HM']," / ",theInputs['sigma_CB_ggHshape_HM']," / "
+            print "VBF -> ",theInputs['n_CB_VBFshape_HM']," / ",theInputs['alpha_CB_VBFshape_HM']," / ",theInputs['n2_CB_VBFshape_HM']," / ",theInputs['alpha2_CB_VBFshape_HM']," / ",theInputs['mean_CB_VBFshape_HM']," / ",theInputs['sigma_CB_VBFshape_HM']," / "            
 
         if not self.bVBF:
             name = "CMS_zz4l_n_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
-            if self.isHighMass : rfv_n_CB = ROOT.RooFormulaVar(name,"("+theInputs['n_CB_shape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
+            nameggH = "CMS_zz4l_n_ggH_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
+            nameVBF = "CMS_zz4l_n_VBF_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)            
+            if self.isHighMass :
+                rfv_n_CB = ROOT.RooFormulaVar(name,"("+theInputs['n_CB_shape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
+                rfv_n_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['n_CB_ggHshape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
+                rfv_n_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['n_CB_VBFshape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
             else : rfv_n_CB = ROOT.RooFormulaVar(name,"("+theInputs['n_CB_shape']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
             
             name = "CMS_zz4l_alpha_{0:.0f}_centralValue".format(self.channel)
-            if self.isHighMass : rfv_alpha_CB = ROOT.RooFormulaVar(name,theInputs['alpha_CB_shape_HM'], ROOT.RooArgList(self.MH))
+            nameggH = "CMS_zz4l_alpha_ggH_{0:.0f}_centralValue".format(self.channel)
+            nameVBF = "CMS_zz4l_alpha_VBF_{0:.0f}_centralValue".format(self.channel)            
+            if self.isHighMass :
+                rfv_alpha_CB = ROOT.RooFormulaVar(name,theInputs['alpha_CB_shape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha_ggHCB = ROOT.RooFormulaVar(nameggH,theInputs['alpha_CB_ggHshape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha_VBFCB = ROOT.RooFormulaVar(nameVBF,theInputs['alpha_CB_VBFshape_HM'], ROOT.RooArgList(self.MH))
             else : rfv_alpha_CB = ROOT.RooFormulaVar(name,theInputs['alpha_CB_shape'], ROOT.RooArgList(self.MH))
             
             name = "CMS_zz4l_n2_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
+            nameggH = "CMS_zz4l_n2_ggH_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
+            nameVBF = "CMS_zz4l_n2_VBF_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
             #if self.isHighMass : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n2))
             #else : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n2))
-            if self.isHighMass : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape_HM']+")",ROOT.RooArgList(self.MH))
+            if self.isHighMass :
+                rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape_HM']+")",ROOT.RooArgList(self.MH))
+                rfv_n2_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['n2_CB_ggHshape_HM']+")",ROOT.RooArgList(self.MH))
+                rfv_n2_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['n2_CB_VBFshape_HM']+")",ROOT.RooArgList(self.MH))
             else : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape']+")",ROOT.RooArgList(self.MH))
 
             name = "CMS_zz4l_alpha2_{0:.0f}_centralValue".format(self.channel)
-            if self.isHighMass : rfv_alpha2_CB = ROOT.RooFormulaVar(name,theInputs['alpha2_CB_shape_HM'], ROOT.RooArgList(self.MH))
+            nameggH = "CMS_zz4l_alpha2_ggH_{0:.0f}_centralValue".format(self.channel)
+            nameVBF = "CMS_zz4l_alpha2_VBF_{0:.0f}_centralValue".format(self.channel)            
+            if self.isHighMass :
+                rfv_alpha2_CB = ROOT.RooFormulaVar(name,theInputs['alpha2_CB_shape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha2_ggHCB = ROOT.RooFormulaVar(nameggH,theInputs['alpha2_CB_ggHshape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha2_VBFCB = ROOT.RooFormulaVar(nameVBF,theInputs['alpha2_CB_VBFshape_HM'], ROOT.RooArgList(self.MH))
             else : rfv_alpha2_CB = ROOT.RooFormulaVar(name,theInputs['alpha2_CB_shape'], ROOT.RooArgList(self.MH))
             
             name = "CMS_zz4l_mean_sig_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
+            nameggH = "CMS_zz4l_mean_sig_ggH_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
+            nameVBF = "CMS_zz4l_mean_sig_VBF_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
         else:
             name = "CMS_zz4l_n_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
-            if self.isHighMass : rfv_n_CB = ROOT.RooFormulaVar(name,"("+theInputs['n_CB_shape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
+            nameggH = "CMS_zz4l_n_ggH_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            nameVBF = "CMS_zz4l_n_VBF_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            if self.isHighMass :
+                rfv_n_CB = ROOT.RooFormulaVar(name,"("+theInputs['n_CB_shape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
+                rfv_n_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['n_CB_ggHshape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
+                rfv_n_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['n_CB_VBFshape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
             else : rfv_n_CB = ROOT.RooFormulaVar(name,"("+theInputs['n_CB_shape']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n))
             
             name = "CMS_zz4l_alpha_{0:.0f}_{1}_centralValue".format(self.channel,self.VBFcat)
-            if self.isHighMass : rfv_alpha_CB = ROOT.RooFormulaVar(name,theInputs['alpha_CB_shape_HM'], ROOT.RooArgList(self.MH))
+            nameggH = "CMS_zz4l_alpha_ggH_{0:.0f}_{1}_centralValue".format(self.channel,self.VBFcat)
+            nameVBF = "CMS_zz4l_alpha_VBF_{0:.0f}_{1}_centralValue".format(self.channel,self.VBFcat)
+            if self.isHighMass :
+                rfv_alpha_CB = ROOT.RooFormulaVar(name,theInputs['alpha_CB_shape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha_ggHCB = ROOT.RooFormulaVar(nameggH,theInputs['alpha_CB_ggHshape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha_VBFCB = ROOT.RooFormulaVar(nameVBF,theInputs['alpha_CB_VBFshape_HM'], ROOT.RooArgList(self.MH))
             else : rfv_alpha_CB = ROOT.RooFormulaVar(name,theInputs['alpha_CB_shape'], ROOT.RooArgList(self.MH))
             
             name = "CMS_zz4l_n2_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            nameggH = "CMS_zz4l_n2_ggH_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            nameVBF = "CMS_zz4l_n2_VBF_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
             #if self.isHighMass : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape_HM']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n2))
             #else : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape']+")"+"*(1+@1)",ROOT.RooArgList(self.MH,CMS_zz4l_n2))
-            if self.isHighMass : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape_HM']+")",ROOT.RooArgList(self.MH))
+            if self.isHighMass :
+                rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape_HM']+")",ROOT.RooArgList(self.MH))
+                rfv_n2_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['n2_CB_ggHshape_HM']+")",ROOT.RooArgList(self.MH))
+                rfv_n2_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['n2_CB_VBFshape_HM']+")",ROOT.RooArgList(self.MH))
             else : rfv_n2_CB = ROOT.RooFormulaVar(name,"("+theInputs['n2_CB_shape']+")",ROOT.RooArgList(self.MH))
 
             name = "CMS_zz4l_alpha2_{0:.0f}_{1}_centralValue".format(self.channel,self.VBFcat)
-            if self.isHighMass : rfv_alpha2_CB = ROOT.RooFormulaVar(name,theInputs['alpha2_CB_shape_HM'], ROOT.RooArgList(self.MH))
+            nameggH = "CMS_zz4l_alpha2_ggH_{0:.0f}_{1}_centralValue".format(self.channel,self.VBFcat)
+            nameVBF = "CMS_zz4l_alpha2_VBF_{0:.0f}_{1}_centralValue".format(self.channel,self.VBFcat)
+            if self.isHighMass :
+                rfv_alpha2_CB = ROOT.RooFormulaVar(name,theInputs['alpha2_CB_shape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha2_ggHCB = ROOT.RooFormulaVar(nameggH,theInputs['alpha2_CB_ggHshape_HM'], ROOT.RooArgList(self.MH))
+                rfv_alpha2_VBFCB = ROOT.RooFormulaVar(nameVBF,theInputs['alpha2_CB_VBFshape_HM'], ROOT.RooArgList(self.MH))
             else : rfv_alpha2_CB = ROOT.RooFormulaVar(name,theInputs['alpha2_CB_shape'], ROOT.RooArgList(self.MH))
             
             name = "CMS_zz4l_mean_sig_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            nameggH = "CMS_zz4l_mean_sig_ggH_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            nameVBF = "CMS_zz4l_mean_sig_VBF_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
             
         if (self.channel == self.ID_4mu) :
-            if self.isHighMass : rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_m_err))
+            if self.isHighMass :
+                rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_m_err))
+                rfv_mean_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['mean_CB_ggHshape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_m_err))
+                rfv_mean_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['mean_CB_VBFshape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_m_err))                
             else : rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_m_err))
         elif (self.channel == self.ID_4e) :
-            if self.isHighMass : rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_e_sig,CMS_zz4l_mean_e_err))
+            if self.isHighMass :
+                rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_e_sig,CMS_zz4l_mean_e_err))
+                rfv_mean_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['mean_CB_ggHshape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_e_sig,CMS_zz4l_mean_e_err))
+                rfv_mean_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['mean_CB_VBFshape_HM']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_e_sig,CMS_zz4l_mean_e_err))                
             else : rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape']+")"+"+@0*@1*@2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_e_sig,CMS_zz4l_mean_e_err))
         elif (self.channel == self.ID_2e2mu) :
-            if self.isHighMass : rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape_HM']+")"+"+ (@0*@1*@3 + @0*@2*@4)/2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_e_sig,CMS_zz4l_mean_m_err,CMS_zz4l_mean_e_err))
+            if self.isHighMass :
+                rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape_HM']+")"+"+ (@0*@1*@3 + @0*@2*@4)/2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_e_sig,CMS_zz4l_mean_m_err,CMS_zz4l_mean_e_err))
+                rfv_mean_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['mean_CB_ggHshape_HM']+")"+"+ (@0*@1*@3 + @0*@2*@4)/2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_e_sig,CMS_zz4l_mean_m_err,CMS_zz4l_mean_e_err))
+                rfv_mean_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['mean_CB_VBFshape_HM']+")"+"+ (@0*@1*@3 + @0*@2*@4)/2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_e_sig,CMS_zz4l_mean_m_err,CMS_zz4l_mean_e_err))
             else : rfv_mean_CB = ROOT.RooFormulaVar(name,"("+theInputs['mean_CB_shape']+")"+"+ (@0*@1*@3 + @0*@2*@4)/2", ROOT.RooArgList(self.MH, CMS_zz4l_mean_m_sig,CMS_zz4l_mean_e_sig,CMS_zz4l_mean_m_err,CMS_zz4l_mean_e_err))
         
 
         if not self.bVBF:
             name = "CMS_zz4l_sigma_sig_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
+            nameggH = "CMS_zz4l_sigma_sig_ggH_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
+            nameVBF = "CMS_zz4l_sigma_sig_VBF_{0:.0f}_{1:.0f}_centralValue".format(self.channel,self.sqrts)
         else:
             name = "CMS_zz4l_sigma_sig_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            nameggH = "CMS_zz4l_sigma_sig_ggH_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
+            nameVBF = "CMS_zz4l_sigma_sig_VBF_{0:.0f}_{1:.0f}_{2}_centralValue".format(self.channel,self.sqrts,self.VBFcat)
         
         if (self.channel == self.ID_4mu) :
-            if self.isHighMass : rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig))
+            if self.isHighMass :
+                rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig))
+                rfv_sigma_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['sigma_CB_ggHshape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig))
+                rfv_sigma_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['sigma_CB_VBFshape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig))                
             else : rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig))
         elif (self.channel == self.ID_4e) :
-            if self.isHighMass : rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_e_sig))
+            if self.isHighMass :
+                rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_e_sig))
+                rfv_sigma_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['sigma_CB_ggHshape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_e_sig))
+                rfv_sigma_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['sigma_CB_VBFshape_HM']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_e_sig))
             else : rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape']+")"+"*(1+@1)", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_e_sig))
         elif (self.channel == self.ID_2e2mu) :
-            if self.isHighMass : rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape_HM']+")"+"*TMath::Sqrt((1+@1)*(1+@2))", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig,CMS_zz4l_sigma_e_sig))
+            if self.isHighMass :
+                rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape_HM']+")"+"*TMath::Sqrt((1+@1)*(1+@2))", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig,CMS_zz4l_sigma_e_sig))
+                rfv_sigma_ggHCB = ROOT.RooFormulaVar(nameggH,"("+theInputs['sigma_CB_ggHshape_HM']+")"+"*TMath::Sqrt((1+@1)*(1+@2))", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig,CMS_zz4l_sigma_e_sig))
+                rfv_sigma_VBFCB = ROOT.RooFormulaVar(nameVBF,"("+theInputs['sigma_CB_VBFshape_HM']+")"+"*TMath::Sqrt((1+@1)*(1+@2))", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig,CMS_zz4l_sigma_e_sig))
             else : rfv_sigma_CB = ROOT.RooFormulaVar(name,"("+theInputs['sigma_CB_shape']+")"+"*TMath::Sqrt((1+@1)*(1+@2))", ROOT.RooArgList(self.MH, CMS_zz4l_sigma_m_sig,CMS_zz4l_sigma_e_sig))
 
         if not self.bVBF:
@@ -509,14 +577,38 @@ class datacardClass:
         print "alpha2_CB ", rfv_alpha2_CB.getVal()
         print "mean_CB ", rfv_mean_CB.getVal()
         print "sigma_CB ", rfv_sigma_CB.getVal()
-        print "gamma_BW ", rfv_gamma_BW.getVal()    
+        print "gamma_BW ", rfv_gamma_BW.getVal()
+        
+        if HMP_flag:
+            print "n_ggHCB ", rfv_n_ggHCB.getVal()
+            print "alpha_ggHCB ", rfv_alpha_ggHCB.getVal()
+            print "n2_ggHCB ", rfv_n2_ggHCB.getVal()
+            print "alpha2_ggHCB ", rfv_alpha2_ggHCB.getVal()
+            print "mean_ggHCB ", rfv_mean_ggHCB.getVal()
+            print "sigma_ggHCB ", rfv_sigma_ggHCB.getVal()
+            print "gamma_BW ", rfv_gamma_BW.getVal()    
+
+            print "n_VBFCB ", rfv_n_VBFCB.getVal()
+            print "alpha_VBFCB ", rfv_alpha_VBFCB.getVal()
+            print "n2_VBFCB ", rfv_n2_VBFCB.getVal()
+            print "alpha2_VBFCB ", rfv_alpha2_VBFCB.getVal()
+            print "mean_VBFCB ", rfv_mean_VBFCB.getVal()
+            print "sigma_VBFCB ", rfv_sigma_VBFCB.getVal()
+            print "gamma_BW ", rfv_gamma_BW.getVal()    
+
 
         if not self.bVBF:
             CMS_zz4l_mean_sig_NoConv = ROOT.RooFormulaVar("CMS_zz4l_mean_sig_NoConv_{0:.0f}_{1:.0f}".format(self.channel,self.sqrts),"@0+@1", ROOT.RooArgList(rfv_mean_CB, self.MH))
+            CMS_zz4l_mean_sig_NoConv_ggH = ROOT.RooFormulaVar("CMS_zz4l_mean_sig_NoConv_ggH_{0:.0f}_{1:.0f}".format(self.channel,self.sqrts),"@0+@1", ROOT.RooArgList(rfv_mean_CB, self.MH))
+            CMS_zz4l_mean_sig_NoConv_VBF = ROOT.RooFormulaVar("CMS_zz4l_mean_sig_NoConv_VBF_{0:.0f}_{1:.0f}".format(self.channel,self.sqrts),"@0+@1", ROOT.RooArgList(rfv_mean_CB, self.MH))
         else:
             CMS_zz4l_mean_sig_NoConv = ROOT.RooFormulaVar("CMS_zz4l_mean_sig_NoConv_{0:.0f}_{1:.0f}_{2}".format(self.channel,self.sqrts,self.VBFcat),"@0+@1", ROOT.RooArgList(rfv_mean_CB, self.MH))
+            CMS_zz4l_mean_sig_NoConv_ggH = ROOT.RooFormulaVar("CMS_zz4l_mean_sig_NoConv_ggH_{0:.0f}_{1:.0f}_{2}".format(self.channel,self.sqrts,self.VBFcat),"@0+@1", ROOT.RooArgList(rfv_mean_CB, self.MH))
+            CMS_zz4l_mean_sig_NoConv_VBF = ROOT.RooFormulaVar("CMS_zz4l_mean_sig_NoConv_VBF_{0:.0f}_{1:.0f}_{2}".format(self.channel,self.sqrts,self.VBFcat),"@0+@1", ROOT.RooArgList(rfv_mean_CB, self.MH))            
 
         print "mean_sig_NoConv ", CMS_zz4l_mean_sig_NoConv.getVal()
+        print "mean_sig_NoConv_ggH ", CMS_zz4l_mean_sig_NoConv_ggH.getVal()
+        print "mean_sig_NoConv_VBF ", CMS_zz4l_mean_sig_NoConv_VBF.getVal()
 
         # bIncludingError variables
         mrelerrVarName = "CMS_zz4l_massRelErr"
@@ -534,87 +626,82 @@ class datacardClass:
 #         ## ----------------- DEFINE ROOREALVARS FOR BSM CASE ------------------ ##
         if HMP_flag:
             print "Defining RooRealVars for the parameters of the shape (High Mass paper)"
-            rrv_brnew_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_brnew_BSM","CMS_zz4l_brnew_BSM",self.brnew_HM_BSM)
-            rrv_csquared_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_csquared_BSM","CMS_zz4l_csquared_BSM",self.csquared_HM_BSM)
+            rrv_brnew_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_brnew_BSM","CMS_zz4l_brnew_BSM",self.brnew_HM_BSM,0.,0.6)
+            rrv_csquared_shape_HM_BSM = ROOT.RooRealVar("CMS_zz4l_csquared_BSM","CMS_zz4l_csquared_BSM",self.csquared_HM_BSM,0.01,1.01)
             rrv_intStr_shape_HM_BSM = ROOT.RooRealVar("interf_ggH","CMS_zz4l_r_BSM",1.,0.,2.)
 
         
         ## --------------------- SHAPE FUNCTIONS ---------------------- ##
-        if DEBUG:
-            print "--> DEBUGGING RESOLUTION SHAPE PARAMETERS FOR MASS = <--",self.mH,", C'^2 = ",self.csquared_HM_BSM," BR_new = ",self.brnew_HM_BSM
-            print "n_CB ", rfv_n_CB.getVal()
-            print "alpha_CB ", rfv_alpha_CB.getVal()
-            print "n2_CB ", rfv_n2_CB.getVal()
-            print "alpha2_CB ", rfv_alpha2_CB.getVal()
-            print "mean_CB ", rfv_mean_CB.getVal()
-            print "sigma_CB ", rfv_sigma_CB.getVal()
-            print "gamma_BW ", rfv_gamma_BW.getVal()
-
     
-        signalCB_ggH = ROOT.RooDoubleCB("signalCB_ggH","signalCB_ggH",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        if not (HMP_flag and self.mH>399.): signalCB_ggH = ROOT.RooDoubleCB("signalCB_ggH","signalCB_ggH",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        else: signalCB_ggH = ROOT.RooDoubleCB("signalCB_ggH","signalCB_ggH",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv_ggH,rfv_mean_ggHCB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_ggHCB, self.bIncludingError),rfv_alpha_ggHCB,rfv_n_ggHCB, rfv_alpha2_ggHCB, rfv_n2_ggHCB)
         #Low mass pdf
-        signalBW_ggH = ROOT.RooRelBWUFParam("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        if HMP_flag: signalBW_ggH = ROOT.RooRelBWUFParam("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        else: signalBW_ggH = ROOT.RooRelBWUFParam("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,1.)
         sig_ggH =  ROOT.RooFFTConvPdf("sig_ggH","BW (X) CB",CMS_zz4l_mass,signalBW_ggH,signalCB_ggH, 2)
         #High mass pdf
         if not (HMP_flag and self.mH>399.):
             signalBW_ggH_HM = ROOT.RooRelBWHighMass("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-            #         else: signalBW_ggH_HM = ROOT.RooSigPlusInt("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_ggH_HM = ROOT.RooBWHighMassGGH("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+        else: signalBW_ggH_HM = ROOT.RooCPSHighMassGGH("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
 
         sig_ggH_HM =  ROOT.RooFFTConvPdf("sig_ggH","BW (X) CB",CMS_zz4l_mass,signalBW_ggH_HM,signalCB_ggH, 2)
   
         
-        signalCB_VBF = ROOT.RooDoubleCB("signalCB_VBF","signalCB_VBF",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        if not (HMP_flag and self.mH>399.): signalCB_VBF = ROOT.RooDoubleCB("signalCB_VBF","signalCB_VBF",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        else: signalCB_VBF = ROOT.RooDoubleCB("signalCB_VBF","signalCB_VBF",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv_VBF,rfv_mean_VBFCB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_VBFCB, self.bIncludingError),rfv_alpha_VBFCB,rfv_n_VBFCB, rfv_alpha2_VBFCB, rfv_n2_VBFCB)        
         #Low mass pdf
-        signalBW_VBF = ROOT.RooRelBWUFParam("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        if HMP_flag: signalBW_VBF = ROOT.RooRelBWUFParam("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        else: signalBW_VBF = ROOT.RooRelBWUFParam("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,1.)
         sig_VBF = ROOT.RooFFTConvPdf("sig_VBF","BW (X) CB",CMS_zz4l_mass,signalBW_VBF,signalCB_VBF, 2)
         #High mass pdf
         if not (HMP_flag and self.mH>399.):
             signalBW_VBF_HM = ROOT.RooRelBWHighMass("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-            #         else: signalBW_ggH_HM = ROOT.RooSigPlusInt("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
         else: signalBW_VBF_HM = ROOT.RooCPSHighMassVBF("signalBW_VBF", "signalBW_VBF",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
 
         sig_VBF_HM =  ROOT.RooFFTConvPdf("sig_VBF","BW (X) CB",CMS_zz4l_mass,signalBW_VBF_HM,signalCB_VBF, 2)
 
                        
         
-        signalCB_WH = ROOT.RooDoubleCB("signalCB_WH","signalCB_WH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        if not (HMP_flag and self.mH>399.): signalCB_WH = ROOT.RooDoubleCB("signalCB_WH","signalCB_WH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        else: signalCB_WH = ROOT.RooDoubleCB("signalCB_WH","signalCB_WH",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv_ggH,rfv_mean_ggHCB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_ggHCB, self.bIncludingError),rfv_alpha_ggHCB,rfv_n_ggHCB, rfv_alpha2_ggHCB, rfv_n2_ggHCB)        
         #Low mass pdf
-        signalBW_WH = ROOT.RooRelBWUFParam("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        if HMP_flag: signalBW_WH = ROOT.RooRelBWUFParam("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        else: signalBW_WH = ROOT.RooRelBWUFParam("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,1.)
         sig_WH = ROOT.RooFFTConvPdf("sig_WH","BW (X) CB",CMS_zz4l_mass,signalBW_WH,signalCB_WH, 2)
         #High mass pdf
         if not (HMP_flag and self.mH>399.):
             signalBW_WH_HM = ROOT.RooRelBWHighMass("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-            #         else: signalBW_ggH_HM = ROOT.RooSigPlusInt("signalBW_ggH", "signalBW_ggH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_WH_HM = ROOT.RooBWHighMassGGH("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+        else: signalBW_WH_HM = ROOT.RooCPSHighMassGGH("signalBW_WH", "signalBW_WH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
 
         sig_WH_HM =  ROOT.RooFFTConvPdf("sig_WH","BW (X) CB",CMS_zz4l_mass,signalBW_WH_HM,signalCB_WH, 2)
 
 
         
-        signalCB_ZH = ROOT.RooDoubleCB("signalCB_ZH","signalCB_ZH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        if not (HMP_flag and self.mH>399.): signalCB_ZH = ROOT.RooDoubleCB("signalCB_ZH","signalCB_ZH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        else: signalCB_ZH = ROOT.RooDoubleCB("signalCB_ZH","signalCB_ZH",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv_ggH,rfv_mean_ggHCB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_ggHCB, self.bIncludingError),rfv_alpha_ggHCB,rfv_n_ggHCB, rfv_alpha2_ggHCB, rfv_n2_ggHCB)        
         #Low mass pdf
-        signalBW_ZH = ROOT.RooRelBWUFParam("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        if HMP_flag: signalBW_ZH = ROOT.RooRelBWUFParam("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        else: signalBW_ZH = ROOT.RooRelBWUFParam("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,1.)
         sig_ZH = ROOT.RooFFTConvPdf("sig_ZH","BW (X) CB",CMS_zz4l_mass,signalBW_ZH,signalCB_ZH, 2)
         #High mass pdf
         if not (HMP_flag and self.mH>399.):
             signalBW_ZH_HM = ROOT.RooRelBWHighMass("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-            #         else: signalBW_ZH_HM = ROOT.RooSigPlusInt("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_ZH_HM = ROOT.RooBWHighMassGGH("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+        else: signalBW_ZH_HM = ROOT.RooCPSHighMassGGH("signalBW_ZH", "signalBW_ZH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
 
         sig_ZH_HM =  ROOT.RooFFTConvPdf("sig_ZH","BW (X) CB",CMS_zz4l_mass,signalBW_ZH_HM,signalCB_ZH, 2)
         
 
         
-        signalCB_ttH = ROOT.RooDoubleCB("signalCB_ttH","signalCB_ttH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        if not (HMP_flag and self.mH>399.): signalCB_ttH = ROOT.RooDoubleCB("signalCB_ttH","signalCB_ttH",CMS_zz4l_mass,self.getVariable(CMS_zz4l_mean_sig_NoConv,rfv_mean_CB,self.bUseCBnoConvolution),self.getVariable(CMS_zz4l_massErr,rfv_sigma_CB, self.bIncludingError),rfv_alpha_CB,rfv_n_CB, rfv_alpha2_CB, rfv_n2_CB)
+        else: signalCB_ttH = ROOT.RooDoubleCB("signalCB_ttH","signalCB_ttH",CMS_zz4l_mass, self.getVariable(CMS_zz4l_mean_sig_NoConv_ggH,rfv_mean_ggHCB, self.bUseCBnoConvolution) , self.getVariable(CMS_zz4l_massErr,rfv_sigma_ggHCB, self.bIncludingError),rfv_alpha_ggHCB,rfv_n_ggHCB, rfv_alpha2_ggHCB, rfv_n2_ggHCB)        
         #Low mass pdf
-        signalBW_ttH = ROOT.RooRelBWUFParam("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        if HMP_flag: signalBW_ttH = ROOT.RooRelBWUFParam("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,self.totWidthSF)
+        else: signalBW_ttH = ROOT.RooRelBWUFParam("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,CMS_zz4l_widthScale,1.)
         sig_ttH = ROOT.RooFFTConvPdf("sig_ttH","BW (X) CB",CMS_zz4l_mass,signalBW_ttH,signalCB_ttH, 2)
         #High mass pdf
         if not (HMP_flag and self.mH>399.):
             signalBW_ttH_HM = ROOT.RooRelBWHighMass("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rfv_gamma_BW)
-            #         else: signalBW_ttH_HM = ROOT.RooSigPlusInt("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_delta_shape_HM_BSM,rrv_gamma_BW_shape_HM_BSM,rrv_k_shape_HM_BSM,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_alpha_shape_HM_BSM,rrv_beta_shape_HM_BSM,rrv_r_shape_HM_BSM)
-        else: signalBW_ttH_HM = ROOT.RooBWHighMassGGH("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
+        else: signalBW_ttH_HM = ROOT.RooCPSHighMassGGH("signalBW_ttH", "signalBW_ttH",CMS_zz4l_mass,CMS_zz4l_mean_BW,rrv_csquared_shape_HM_BSM,rrv_brnew_shape_HM_BSM,rrv_intStr_shape_HM_BSM,self.is8TeV)
 
         sig_ttH_HM =  ROOT.RooFFTConvPdf("sig_ttH","BW (X) CB",CMS_zz4l_mass,signalBW_ttH_HM,signalCB_ttH, 2)
         
@@ -1545,6 +1632,117 @@ class datacardClass:
                    
         
         bkg_ggzz = ROOT.RooggZZPdf_v2("bkg_ggzzTmp","bkg_ggzzTmp",CMS_zz4l_mass,CMS_ggzzbkg_a0,CMS_ggzzbkg_a1,CMS_ggzzbkg_a2,CMS_ggzzbkg_a3,CMS_ggzzbkg_a4,CMS_ggzzbkg_a5,CMS_ggzzbkg_a6,CMS_ggzzbkg_a7,CMS_ggzzbkg_a8,CMS_ggzzbkg_a9)
+
+#         ## VBFZZ contribution
+#         if not self.bVBF:
+#             name = "CMS_vbfzzbkg_a0_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a0 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a0",115.3,0.,200.)
+#             name = "CMS_vbfzzbkg_a1_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a1 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a1",21.96,0.,200.)
+#             name = "CMS_vbfzzbkg_a2_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a2 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a2",122.8,0.,200.)
+#             name = "CMS_vbfzzbkg_a3_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a3 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a3",0.03479,0.,1.)
+#             name = "CMS_vbfzzbkg_a4_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a4 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a4",185.5,0.,200.)
+#             name = "CMS_vbfzzbkg_a5_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a5 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a5",12.67,0.,200.)
+#             name = "CMS_vbfzzbkg_a6_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a6 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a6",34.81,0.,100.)
+#             name = "CMS_vbfzzbkg_a7_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a7 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a7",0.1393,0.,1.)
+#             name = "CMS_vbfzzbkg_a8_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a8 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a8",66.,0.,200.)
+#             name = "CMS_vbfzzbkg_a9_{0:.0f}_{1:.0f}".format( self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a9 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a9",0.07191,0.,1.)
+#             name = "CMS_vbfzzbkg_a10_{0:.0f}_{1:.0f}".format(self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a10 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a10",94.11,0.,200.)
+#             name = "CMS_vbfzzbkg_a11_{0:.0f}_{1:.0f}".format(self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a11 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a11",-5.111,-100.,100.)
+#             name = "CMS_vbfzzbkg_a12_{0:.0f}_{1:.0f}".format(self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a12 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a12",4834,0.,10000.)
+#             name = "CMS_vbfzzbkg_a13_{0:.0f}_{1:.0f}".format(self.channel,self.sqrts )
+#             CMS_vbfzzbkg_a13 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a13",0.2543,0.,1.)
+#         else:
+#             name = "CMS_vbfzzbkg_a0_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a0 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a0",115.3,0.,200.)
+#             name = "CMS_vbfzzbkg_a1_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a1 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a1",21.96,0.,200.)
+#             name = "CMS_vbfzzbkg_a2_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a2 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a2",122.8,0.,200.)
+#             name = "CMS_vbfzzbkg_a3_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a3 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a3",0.03479,0.,1.)
+#             name = "CMS_vbfzzbkg_a4_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a4 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a4",185.5,0.,200.)
+#             name = "CMS_vbfzzbkg_a5_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a5 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a5",12.67,0.,200.)
+#             name = "CMS_vbfzzbkg_a6_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a6 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a6",34.81,0.,100.)
+#             name = "CMS_vbfzzbkg_a7_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a7 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a7",0.1393,0.,1.)
+#             name = "CMS_vbfzzbkg_a8_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a8 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a8",66.,0.,200.)
+#             name = "CMS_vbfzzbkg_a9_{0:.0f}_{1:.0f}_{2}".format( self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a9 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a9",0.07191,0.,1.)
+#             name = "CMS_vbfzzbkg_a10_{0:.0f}_{1:.0f}_{2}".format(self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a10 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a10",94.11,0.,200.)
+#             name = "CMS_vbfzzbkg_a11_{0:.0f}_{1:.0f}_{2}".format(self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a11 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a11",-5.111,-100.,100.)
+#             name = "CMS_vbfzzbkg_a12_{0:.0f}_{1:.0f}_{2}".format(self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a12 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a12",4834,0.,10000.)
+#             name = "CMS_vbfzzbkg_a13_{0:.0f}_{1:.0f}_{2}".format(self.channel,self.sqrts,self.VBFcat )
+#             CMS_vbfzzbkg_a13 = ROOT.RooRealVar(name,"CMS_vbfzzbkg_a13",0.2543,0.,1.)
+        
+
+        if (DEBUG) :
+            print "VBFZZshape_a0 = ",theInputs['VBFZZshape_a0']
+            print "VBFZZshape_a1 = ",theInputs['VBFZZshape_a1']
+            print "VBFZZshape_a2 = ",theInputs['VBFZZshape_a2']
+            print "VBFZZshape_a3 = ",theInputs['VBFZZshape_a3']
+            print "VBFZZshape_a4 = ",theInputs['VBFZZshape_a4']
+            print "VBFZZshape_a5 = ",theInputs['VBFZZshape_a5']
+            print "VBFZZshape_a6 = ",theInputs['VBFZZshape_a6']
+            print "VBFZZshape_a7 = ",theInputs['VBFZZshape_a7']
+            print "VBFZZshape_a8 = ",theInputs['VBFZZshape_a8']
+            print "VBFZZshape_a9 = ",theInputs['VBFZZshape_a9']
+            print "VBFZZshape_a10 = ",theInputs['VBFZZshape_a10']
+            print "VBFZZshape_a11 = ",theInputs['VBFZZshape_a11']
+            print "VBFZZshape_a12 = ",theInputs['VBFZZshape_a12']
+            print "VBFZZshape_a13 = ",theInputs['VBFZZshape_a13']
+
+        
+#         CMS_vbfzzbkg_a0.setVal(theInputs['VBFZZshape_a0'])
+#         CMS_vbfzzbkg_a1.setVal(theInputs['VBFZZshape_a1'])
+#         CMS_vbfzzbkg_a2.setVal(theInputs['VBFZZshape_a2'])
+#         CMS_vbfzzbkg_a3.setVal(theInputs['VBFZZshape_a3'])
+#         CMS_vbfzzbkg_a4.setVal(theInputs['VBFZZshape_a4'])
+#         CMS_vbfzzbkg_a5.setVal(theInputs['VBFZZshape_a5'])
+#         CMS_vbfzzbkg_a6.setVal(theInputs['VBFZZshape_a6'])
+#         CMS_vbfzzbkg_a7.setVal(theInputs['VBFZZshape_a7'])
+#         CMS_vbfzzbkg_a8.setVal(theInputs['VBFZZshape_a8'])
+#         CMS_vbfzzbkg_a9.setVal(theInputs['VBFZZshape_a9'])
+#         CMS_vbfzzbkg_a10.setVal(theInputs['VBFZZshape_a10'])
+#         CMS_vbfzzbkg_a11.setVal(theInputs['VBFZZshape_a11'])
+#         CMS_vbfzzbkg_a12.setVal(theInputs['VBFZZshape_a12'])
+#         CMS_vbfzzbkg_a13.setVal(theInputs['VBFZZshape_a13'])
+        
+#         CMS_vbfzzbkg_a0.setConstant(True)
+#         CMS_vbfzzbkg_a1.setConstant(True)
+#         CMS_vbfzzbkg_a2.setConstant(True)
+#         CMS_vbfzzbkg_a3.setConstant(True)
+#         CMS_vbfzzbkg_a4.setConstant(True)
+#         CMS_vbfzzbkg_a5.setConstant(True)
+#         CMS_vbfzzbkg_a6.setConstant(True)
+#         CMS_vbfzzbkg_a7.setConstant(True)
+#         CMS_vbfzzbkg_a8.setConstant(True)
+#         CMS_vbfzzbkg_a9.setConstant(True)
+#         CMS_vbfzzbkg_a10.setConstant(True)
+#         CMS_vbfzzbkg_a11.setConstant(True)
+#         CMS_vbfzzbkg_a12.setConstant(True)
+#         CMS_vbfzzbkg_a13.setConstant(True)
+        
+#         bkg_vbfzz = ROOT.RooqqZZPdf_v2("bkg_vbfzzTmp","bkg_vbfzzTmp",CMS_zz4l_mass,CMS_vbfzzbkg_a0,CMS_vbfzzbkg_a1,CMS_vbfzzbkg_a2,CMS_vbfzzbkg_a3,CMS_vbfzzbkg_a4,CMS_vbfzzbkg_a5,CMS_vbfzzbkg_a6,CMS_vbfzzbkg_a7,CMS_vbfzzbkg_a8,CMS_vbfzzbkg_a9,CMS_vbfzzbkg_a10,CMS_vbfzzbkg_a11,CMS_vbfzzbkg_a12,CMS_vbfzzbkg_a13)
+        
     
         ## Reducible backgrounds
         val_meanL_3P1F = float(theInputs['zjetsShape_mean_3P1F'])
@@ -1716,6 +1914,7 @@ class datacardClass:
  
 	bkg_qqzzErr = ROOT.RooProdPdf("bkg_qqzzErr","bkg_qqzzErr", ROOT.RooArgSet(bkg_qqzz), ROOT.RooFit.Conditional(ROOT.RooArgSet(pdfErrZZ), ROOT.RooArgSet(RelErr)));
 	bkg_ggzzErr = ROOT.RooProdPdf("bkg_ggzzErr","bkg_ggzzErr", ROOT.RooArgSet(bkg_ggzz), ROOT.RooFit.Conditional(ROOT.RooArgSet(pdfErrZZ), ROOT.RooArgSet(RelErr)));
+        # bkg_vbfzzErr = ROOT.RooProdPdf("bkg_vbfzzErr","bkg_vbfzzErr", ROOT.RooArgSet(bkg_vbfzz), ROOT.RooFit.Conditional(ROOT.RooArgSet(pdfErrZZ), ROOT.RooArgSet(RelErr)));
 	bkg_zjetsErr = ROOT.RooProdPdf("bkg_zjetsErr","bkg_zjetsErr", ROOT.RooArgSet(bkg_zjets), ROOT.RooFit.Conditional(ROOT.RooArgSet(pdfErrZX), ROOT.RooArgSet(RelErr)));
 
 
@@ -1723,6 +1922,7 @@ class datacardClass:
         if(self.bVBF):
             bkg2d_qqZZ_Fisher = ROOT.RooProdPdf()
             bkg2d_ggZZ_Fisher = ROOT.RooProdPdf()
+            # bkg2d_VBFZZ_Fisher = ROOT.RooProdPdf()            
             bkg2d_ZX_Fisher = ROOT.RooProdPdf()
             bkg2d_qqZZ_Pt = ROOT.RooProdPdf()
             bkg2d_ggZZ_Pt = ROOT.RooProdPdf()
@@ -2505,7 +2705,7 @@ class datacardClass:
         sigRate_WH = CS_WH*BRZZ*sigEfficiency_WH*1000.*self.lumi
         sigRate_ZH = CS_ZH*BRZZ*sigEfficiency_ZH*1000.*self.lumi
         sigRate_ttH = CS_ttH*BRZZ*sigEfficiency_ttH*1000.*self.lumi
-
+                    
         rfvTag_Ratio_ggH = ROOT.RooFormulaVar()
         rfvTag_Ratio_qqH = ROOT.RooFormulaVar()
         rfvTag_Ratio_WH = ROOT.RooFormulaVar()
@@ -2611,23 +2811,40 @@ class datacardClass:
         print "!!!%%%*** ",rrvNormSig.getVal()
         print "!!!%%%*** ",integral_ggH
         
+        if HMP_flag:
 
-        #rfvSigRate_ggH = ROOT.RooFormulaVar("ggH_norm","@0*@1*1000*{0}*{2}/{1}".format(self.lumi,rrvNormSig.getVal(),self.getVariable(signalCB_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),sig_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),self.bUseCBnoConvolution)),ROOT.RooArgList(rfvSigEff_ggH, rhfXsBrFuncV_1))
+            rfvSigRate_ggH = ROOT.RooFormulaVar("ggH_norm","@0*@1*(@2*(1-@3))*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ggH,self.getVariable(rfvTag_Ratio_ggH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ggH, rhfXsBrFuncV_1, rrv_csquared_shape_HM_BSM, rrv_brnew_shape_HM_BSM)) 
 
-        rfvSigRate_ggH = ROOT.RooFormulaVar("ggH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ggH,self.getVariable(rfvTag_Ratio_ggH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ggH, rhfXsBrFuncV_1))
+            print "Compare integrals: integral_ggH=",integral_ggH,"  ; calculated=",self.getVariable(signalCB_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),sig_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),self.bUseCBnoConvolution)
+
+            rfvSigRate_VBF = ROOT.RooFormulaVar("qqH_norm","@0*@1*(@2*(1-@3))*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_VBF,self.getVariable(rfvTag_Ratio_qqH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_qqH, rhfXsBrFuncV_2, rrv_csquared_shape_HM_BSM, rrv_brnew_shape_HM_BSM))
+
+
+            rfvSigRate_WH = ROOT.RooFormulaVar("WH_norm","@0*@1*(@2*(1-@3))*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_WH,self.getVariable(rfvTag_Ratio_WH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_WH, rhfXsBrFuncV_3, rrv_csquared_shape_HM_BSM, rrv_brnew_shape_HM_BSM))
+
+
+            rfvSigRate_ZH = ROOT.RooFormulaVar("ZH_norm","@0*@1*(@2*(1-@3))*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ZH,self.getVariable(rfvTag_Ratio_ZH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ZH, rhfXsBrFuncV_4, rrv_csquared_shape_HM_BSM, rrv_brnew_shape_HM_BSM))
+
+
+            rfvSigRate_ttH = ROOT.RooFormulaVar("ttH_norm","@0*@1*(@2*(1-@3))*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ttH,self.getVariable(rfvTag_Ratio_ttH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ttH, rhfXsBrFuncV_5, rrv_csquared_shape_HM_BSM, rrv_brnew_shape_HM_BSM))
+
+        else:
+
+            rfvSigRate_ggH = ROOT.RooFormulaVar("ggH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ggH,self.getVariable(rfvTag_Ratio_ggH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ggH, rhfXsBrFuncV_1))
         
-        print "Compare integrals: integral_ggH=",integral_ggH,"  ; calculated=",self.getVariable(signalCB_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),sig_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),self.bUseCBnoConvolution)
-        
-        rfvSigRate_VBF = ROOT.RooFormulaVar("qqH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_VBF,self.getVariable(rfvTag_Ratio_qqH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_qqH, rhfXsBrFuncV_2))
-        
-        
-        rfvSigRate_WH = ROOT.RooFormulaVar("WH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_WH,self.getVariable(rfvTag_Ratio_WH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_WH, rhfXsBrFuncV_3))
-        
-        
-        rfvSigRate_ZH = ROOT.RooFormulaVar("ZH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ZH,self.getVariable(rfvTag_Ratio_ZH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ZH, rhfXsBrFuncV_4))
-        
-        
-        rfvSigRate_ttH = ROOT.RooFormulaVar("ttH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ttH,self.getVariable(rfvTag_Ratio_ttH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ttH, rhfXsBrFuncV_5))
+            print "Compare integrals: integral_ggH=",integral_ggH," ; calculated=",self.getVariable(signalCB_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),sig_ggH.createIntegral(RooArgSet(CMS_zz4l_mass),ROOT.RooFit.Range("shape")).getVal(),self.bUseCBnoConvolution)
+
+            rfvSigRate_VBF = ROOT.RooFormulaVar("qqH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_VBF,self.getVariable(rfvTag_Ratio_qqH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_qqH, rhfXsBrFuncV_2))
+
+
+            rfvSigRate_WH = ROOT.RooFormulaVar("WH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_WH,self.getVariable(rfvTag_Ratio_WH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_WH, rhfXsBrFuncV_3))
+
+
+            rfvSigRate_ZH = ROOT.RooFormulaVar("ZH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ZH,self.getVariable(rfvTag_Ratio_ZH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ZH, rhfXsBrFuncV_4))
+
+
+            rfvSigRate_ttH = ROOT.RooFormulaVar("ttH_norm","@0*@1*1000*{0}*{2}/{1}*{3}".format(self.lumi,rrvNormSig.getVal(),integral_ttH,self.getVariable(rfvTag_Ratio_ttH.getVal(),one.getVal(),self.bVBF)),ROOT.RooArgList(rfvSigEff_ttH, rhfXsBrFuncV_5))
+
         
 
         print signalCB_ggH.createIntegral(ROOT.RooArgSet(CMS_zz4l_mass)).getVal(),"   ",sig_ggH.createIntegral(ROOT.RooArgSet(CMS_zz4l_mass)).getVal()
@@ -2802,6 +3019,7 @@ class datacardClass:
             if self.isHighMass :
                 w.importClassCode(RooRelBWHighMass.Class(),True)
                 if HMP_flag:
+                    w.importClassCode(RooCPSHighMassGGH.Class(),True)
                     w.importClassCode(RooBWHighMassGGH.Class(),True)
                     w.importClassCode(RooCPSHighMassVBF.Class(),True)                
 

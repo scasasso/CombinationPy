@@ -13,7 +13,7 @@ from array import array
 
 class systematicsClass:
 
-    def __init__(self,theMass,theForXSxBR,theisFSR,theInputs,isHMP):
+    def __init__(self,theMass,theForXSxBR,theisFSR,theInputs,isHMP,isBSM):
 
         self.ID_4mu = 1
         self.ID_4e = 2
@@ -26,6 +26,7 @@ class systematicsClass:
         self.isFSR = theisFSR
         self.model = theInputs['model']
         self.isHMP = isHMP
+        self.isBSM = isBSM        
 
 
         self.muSelError = 0.0
@@ -636,6 +637,29 @@ class systematicsClass:
         theFile.write("CMS_zz4l_qqZZ_Pt_sys param 0  1  [-3,3]\n")
         theFile.write("CMS_zz4l_ggZZ_Pt_sys param 0  1  [-3,3]\n")
         theFile.write("CMS_zz4l_ZX_Pt_sys param 0  1  [-3,3]\n")
+
+    # FIXME: still to add effect on VBF -> ZZ
+    def Write_offshellh126(self,theFile,theInputs):
+
+        theFile.write("offshell_h126 lnN ")
+
+        systLine={'ggH':"- "}
+        systLine['qqH']="- "
+        systLine['WH']="- "
+        systLine['ZH']="- "
+        systLine['ttH']="- "
+        systLine['qqZZ']="- "
+        systLine['zjets']="- "
+        systLine['ttbar']="- "
+        systLine['zbb']="- "
+            
+        if self.mH < 300.: systLine['ggZZ']="{0:.2f} ".format(1.05)
+        elif self.mH < 400.: systLine['ggZZ']="{0:.2f} ".format(1.1)
+        elif self.mH < 650.: systLine['ggZZ']="{0:.2f} ".format(1.2)
+        else:  systLine['ggZZ']="{0:.2f} ".format(1.3)                                
+            
+        self.Write_Systematics_Line(systLine,theFile,theInputs)
+                    
     
     def WriteSystematics(self,theFile,theInputs, theVBFcat=False, theUse3D=False):
 
@@ -673,6 +697,8 @@ class systematicsClass:
 
         if theInputs['useQCDscale_VV']:
             self.Write_QCDscale_VV(theFile,theInputs)
+            
+        if self.isBSM: self.Write_offshellh126(theFile,theInputs)
 	
 	## Higgs BR
         if(self.model == "SM" or self.model == "FF") and theInputs['useBRhiggs_hzz4l']:
@@ -711,7 +737,7 @@ class systematicsClass:
             self.Write_CMS_zz4l_Fisher_sys(theFile,theInputs)
             
         if (not theVBFcat and theUse3D and theInputs['useCMS_zz4l_Pt_sys']):
-            self.Write_CMS_zz4l_Pt_sys(theFile,theInputs)
+            self.Write_CMS_zz4l_Pt_sys(theFile,theInputs)        
             
 
     def WriteShapeSystematics(self,theFile,theInputs):
