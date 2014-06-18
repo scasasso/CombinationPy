@@ -53,7 +53,7 @@ float mBinSize=2.;
 
 //Mela* myMELA;
 
-const TString destDir = "../CreateDatacards/templates2D/";
+const TString destDir = "../CreateDatacards/templates2D/TEST/";
 
 //=======================================================================
 
@@ -69,77 +69,6 @@ TH2F* makebkg(TH2F *SM1, TH2F *SM10, TH2F *SM25){
 
   int nXbins=madebkg->GetNbinsX();
   int nYbins=madebkg->GetNbinsY();
-    
-  //TCanvas* c1 = new TCanvas("c1","c1",800,800);
-  //c1->cd();
-  //madebkg->Draw("COLZ");
-  /*
-  // normalize slices
-
-  double norm;
-  TH1F* tempProj;
-  
-  for(int i=1; i<=nXbins; i++){   
-    tempProj = (TH1F*) madebkg->ProjectionY("tempProj",i,i);
-    norm=tempProj->Integral();
-    cout<<norm<<endl;
-
-    if (norm!=0.) { // Avoid introducing NaNs in the histogram
-      for(int j=1; j<=nYbins; j++){
-        madebkg->SetBinContent(i,j, madebkg->GetBinContent(i,j)/norm   );
-      }
-    }
-  }
-
-  
-  // average 
-
-  TH2F* notSmooth = new TH2F(*madebkg);
-
-  int effectiveArea=1;
-  double average=0,binsUsed=0;
-
-  for(int i=1; i<=nXbins; i++){
-    for(int j=1; j<=nYbins; j++){
-
-      //  binMzz=(i-1)*2+181;
-      float binMzz = madebkg->GetBinCenter(i);
-
-      if( binMzz<300 ) continue;
-      if( binMzz>=300 && binMzz<350 ) effectiveArea=1;
-      if( binMzz>=350 && binMzz<500 ) effectiveArea=3;
-      if( binMzz>=500 && binMzz<600 ) effectiveArea=5;
-      if( binMzz>=600 && binMzz<800 ) effectiveArea=7;
-      if( binMzz>=800 && binMzz<1000) effectiveArea=11;
-      if( binMzz>=1000 && binMzz<1200)effectiveArea=15;
-      if( binMzz>=1200 ) effectiveArea=25;
-      
-      for(int a=-effectiveArea; a<=effectiveArea; a++){
-        if(a+i<1 || a+i>nXbins || j>nYbins || j<1) continue;
-        average+= notSmooth->GetBinContent(a+i,j);
-        binsUsed++;
-      }
-      
-      madebkg->SetBinContent(i,j,average/binsUsed);
-
-      average=0;
-      binsUsed=0;
-
-    } // end loop over D
-  } // end loop over mZZ
-   // end of horizontal averaging
-  
-  // smooth
-
-  madebkg->Smooth();
-  
-  for(int i=1; i<=nXbins; i++){
-    for(int j=1; j<=nYbins; j++){
-      if(madebkg->GetBinContent(i,j)==0)
-      madebkg->SetBinContent(i,j,.00001);
-    }// for(int j=1; j<=nYbins; j++){
-  }// for(int i=1; i<=nXbins; i++){
-    */
   return madebkg;
 }
 
@@ -466,10 +395,10 @@ void buildChain(TChain* bkgMC, TString channel, int sampleIndex=0) {
     //       sprintf(temp,"CJLSTtree_Jun25_2012/JHUsignal/HZZ%sTree_%s.root",channel,sample[sampleIndex].c_str());
     //       bkgMC->Add(temp);
   } else if(sampleIndex==4){ //Needs to be changed when background in place
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4mu.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4e.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_2e2mu.root");
-  } else if(sampleIndex==5){ //Needs to be changed when background in place
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/" + chPath +"/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/" + chPath +"/HZZ4lTree_ZZTo4muJJ_Contin.root");
+    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/" + chPath +"/HZZ4lTree_ZZTo4eJJ_Contin.root");
+  }/* else if(sampleIndex==5){ //Needs to be changed when background in place
     bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4mu10SM.root");
     bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4e10SM.root");
     bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_2e2mu10SM.root");
@@ -477,7 +406,7 @@ void buildChain(TChain* bkgMC, TString channel, int sampleIndex=0) {
     bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4mu25SM.root");
     bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_4e25SM.root");
     bkgMC->Add("/scratch0/hep/ianderso/CJLST/VBF_Private/" + chPath +"/HZZ4lTree_VBF_phantom_2e2mu25SM.root");
-  }
+  }*/
     
 }
 
@@ -710,17 +639,13 @@ TH2F* mergeTemplates(TH2F* lowTemp, TH2F* highTemp){
 
 void makeTemplate(TString channel="4mu"){
 
-  //  sprintf(temp,"../datafiles/Dsignal_%s.root",channel.Data());
   TFile* fsig = new TFile(destDir + "Dsignal_" + channel + ".root","RECREATE");
   TFile* fAltsig = 0;
   if (makeAltSignal) {
-    //    sprintf(temp,"../datafiles/Dsignal_ALT_%s.root",channel.Data());
     fAltsig = new TFile(destDir + "Dsignal_ALT_" + channel + ".root","RECREATE");
   }
-  //  sprintf(temp,"../datafiles/Dbackground_qqZZ_%s.root",channel.Data());
   TFile* fqqZZ = new TFile(destDir + "Dbackground_qqZZ_" + channel + ".root","RECREATE");
   TFile* fVBFBkg = new TFile(destDir + "Dbackground_VBFBkg_" + channel + ".root","RECREATE");
-  //  sprintf(temp,"../datafiles/Dbackground_ggZZ_%s.root",channel.Data());
   TFile* fggZZ = new TFile(destDir + "Dbackground_ggZZ_" + channel + ".root","RECREATE");
   TFile* fZX = new TFile(destDir + "Dbackground_ZX_" + channel + ".root","RECREATE");
   TH2F* oldTemp;
@@ -731,11 +656,11 @@ void makeTemplate(TString channel="4mu"){
   
   // ========================================
   // SM Higgs template
-  /*
+  
   low = fillTemplate(channel,0,true);
   high = fillTemplate(channel,0,false);
   h_mzzD = mergeTemplates(low,high);
-  */
+  
 
   // ---------- apply interference reweighting --------
   
@@ -749,7 +674,7 @@ void makeTemplate(TString channel="4mu"){
     cout << "h_mzzD: " << h_mzzD << endl;*/
 
   // --------------------------------------------------
-  /*
+  
   fsig->cd();
 
   h_mzzD->Write("h_mzzD");
@@ -757,7 +682,7 @@ void makeTemplate(TString channel="4mu"){
   h_mzzD->Write("h_mzzD_up");
   h_mzzD->Write("h_mzzD_dn");
   fsig->Close();
-  */
+  
   // ========================================
   // alternative signal template
 
@@ -789,7 +714,7 @@ void makeTemplate(TString channel="4mu"){
   
   // =======================================
   // qqZZ template
-  /*
+  
   low = fillTemplate(channel,1,true);
   high = fillTemplate(channel,1,false);
   h_mzzD = mergeTemplates(low,high);
@@ -812,41 +737,19 @@ void makeTemplate(TString channel="4mu"){
   histoPair.second->Write("h_mzzD_dn");
   fqqZZ->Close();
 
-  */
+  
 
   // =======================================
   // VBF qqZZ template
 
   low = fillTemplate(channel,4,true);
   high = fillTemplate(channel,4,false);
-  TH2F* SM1 = mergeTemplates(low,high);
+  h_mzzD = mergeTemplates(low,high);
 
-  low = fillTemplate(channel,5,true);
-  high = fillTemplate(channel,5,false);
-  TH2F* SM10 = mergeTemplates(low,high);
-
-  low = fillTemplate(channel,6,true);
-  high = fillTemplate(channel,6,false);
-  TH2F* SM25 = mergeTemplates(low,high);
-
-  /*TCanvas* c1 = new TCanvas("c1","c1",800,800);
-  c1->cd();
-  SM1->Draw("COLZ");
-
-  TCanvas* c2 = new TCanvas("c2","c2",800,800);
-  c2->cd();
-  SM10->Draw("COLZ");
-
-  TCanvas* c3 = new TCanvas("c3","c3",800,800);
-  c3->cd();
-  SM25->Draw("COLZ");*/
-
-  h_mzzD = makebkg(SM1,SM10,SM25);
+  // ---------- apply interference reweighting --------
 
   oldTemp = new TH2F(*h_mzzD);
   oldTemp->SetName("oldTemp");
-
-  // ---------- apply interference reweighting --------
 
   cout << "apply systematics for zjets control region" << endl;
   
@@ -857,9 +760,6 @@ void makeTemplate(TString channel="4mu"){
   fVBFBkg->cd();
   h_mzzD->Write("h_mzzD");
   oldTemp->Write("oldTemp");
-  SM1->Write("SM1");
-  SM10->Write("SM10");
-  SM25->Write("SM25");
   histoPair.first->Write("h_mzzD_up");
   histoPair.second->Write("h_mzzD_dn");
   fVBFBkg->Close();
@@ -931,7 +831,7 @@ void makeTemplate(TString channel="4mu"){
       double norm_up=(ZXup->ProjectionY("temp",ZXbinx,ZXbinx))->Integral();
       for(int ZXbiny=1; ZXbiny<=ZXup->GetNbinsY(); ZXbiny++){
       
-	ZXup->SetBinContent(ZXbinx,ZXbiny,ZXup->GetBinContent(ZXbinx,ZXbiny)/norm_up);
+    	ZXup->SetBinContent(ZXbinx,ZXbiny,ZXup->GetBinContent(ZXbinx,ZXbiny)/norm_up);
 
       }
 
@@ -951,8 +851,8 @@ void makeTemplate(TString channel="4mu"){
 void storeLDDistribution(){
 
   makeTemplate("4mu");
-  //makeTemplate("4e");
-  //makeTemplate("2e2mu");
+  makeTemplate("4e");
+  makeTemplate("2e2mu");
 
 }
 
