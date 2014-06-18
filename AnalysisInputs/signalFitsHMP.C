@@ -39,8 +39,8 @@
 //<----------
 
 // New flags and options
-TString appendStr("_C1.0_fitted");
-Double_t cprimeVal = 1.0;
+TString appendStr("_C0.2_fitted");
+Double_t cprimeVal = 0.2;
 
 bool fixResPars = false;
 bool copyToWeb = false;
@@ -49,8 +49,8 @@ const char* webDir = "/afs/cern.ch/user/s/scasasso/www/H4l/HighMass/SignalShapes
 //Parameters to choose which samples to examine
 //HCP option is useggH=true, useVBF,useVH = false and usedijet,usenondijet=true
 bool debug = false;
-bool useggH = false;
-bool useVBF = true;
+bool useggH = true;
+bool useVBF = false;
 bool useVH = false;
 bool usedijet = true;
 bool usenondijet = true;
@@ -862,7 +862,10 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
 
   char tmp_outCardName[200];
   sprintf(tmp_outCardName,"%iTeV_",sqrts);
-  string prependName = "CardFragments/signalFunctions_";
+  string prependName = "CardFragments/signalFunctionsHMP_";
+  if (useggH && !useVBF) prependName += "ggH_";
+  else if (!useggH && useVBF) prependName += "VBF_";
+  else prependName += "";
   string appendName = ".txt";
   string outCardName =  prependName + tmp_outCardName + schannel + appendName;
 
@@ -875,16 +878,21 @@ void signalFitsHMP(int channel, int sqrts, ofstream* interpCode){
   highgamma1=highparameter(fit_Gamma,1);
   highgamma2=highparameter(fit_Gamma,2);
 
+  TString tag;
+  if (useggH && !useVBF) tag = "HighMasssignalShapeggH";
+  else if (!useggH && useVBF) tag = "HighMasssignalShapeVBF";
+  else tag = "HighMasssignalShape";
+
   ofstream ofsCard;
   if (usedijet && usenondijet){
     ofsCard.open(outCardName.c_str(),fstream::out);
     ofsCard << "## signal functions --- no spaces! ##" << endl;
-    ofsCard << "HighMasssignalShape n_CB 5"<< endl;
-    ofsCard << "HighMasssignalShape alpha_CB " << fit_alphaCB_1->GetParameter(0) << "+(" << fit_alphaCB_1->GetParameter(1) << "*@0)+(" << fit_alphaCB_1->GetParameter(2) << "*@0*@0)+(" << fit_alphaCB_1->GetParameter(3) << "*@0*@0*@0)+(" << fit_alphaCB_1->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_alphaCB_1->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
-    ofsCard << "HighMasssignalShape n2_CB 20" << endl;
-    ofsCard << "HighMasssignalShape alpha2_CB " << fit_alphaCB_2->GetParameter(0) << "+(" << fit_alphaCB_2->GetParameter(1) << "*@0)+(" << fit_alphaCB_2->GetParameter(2) << "*@0*@0)+(" << fit_alphaCB_2->GetParameter(3) << "*@0*@0*@0)+(" << fit_alphaCB_2->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_alphaCB_2->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
-    ofsCard << "HighMasssignalShape mean_CB " << fit_meanCB->GetParameter(0) << "+(" << fit_meanCB->GetParameter(1) << "*@0)+(" << fit_meanCB->GetParameter(2) << "*@0*@0)+(" << fit_meanCB->GetParameter(3) << "*@0*@0*@0)+(" << fit_meanCB->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_meanCB->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
-    ofsCard << "HighMasssignalShape sigma_CB " << fit_sigmaCB->GetParameter(0) << "+(" << fit_sigmaCB->GetParameter(1) << "*@0)+(" << fit_sigmaCB->GetParameter(2) << "*@0*@0)+(" << fit_sigmaCB->GetParameter(3) << "*@0*@0*@0)+(" << fit_sigmaCB->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_sigmaCB->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
+    ofsCard << tag << " n_CB 5"<< endl;
+    ofsCard << tag << " alpha_CB " << fit_alphaCB_1->GetParameter(0) << "+(" << fit_alphaCB_1->GetParameter(1) << "*@0)+(" << fit_alphaCB_1->GetParameter(2) << "*@0*@0)+(" << fit_alphaCB_1->GetParameter(3) << "*@0*@0*@0)+(" << fit_alphaCB_1->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_alphaCB_1->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
+    ofsCard << tag << " n2_CB 20" << endl;
+    ofsCard << tag << " alpha2_CB " << fit_alphaCB_2->GetParameter(0) << "+(" << fit_alphaCB_2->GetParameter(1) << "*@0)+(" << fit_alphaCB_2->GetParameter(2) << "*@0*@0)+(" << fit_alphaCB_2->GetParameter(3) << "*@0*@0*@0)+(" << fit_alphaCB_2->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_alphaCB_2->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
+    ofsCard << tag << " mean_CB " << fit_meanCB->GetParameter(0) << "+(" << fit_meanCB->GetParameter(1) << "*@0)+(" << fit_meanCB->GetParameter(2) << "*@0*@0)+(" << fit_meanCB->GetParameter(3) << "*@0*@0*@0)+(" << fit_meanCB->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_meanCB->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
+    ofsCard << tag << " sigma_CB " << fit_sigmaCB->GetParameter(0) << "+(" << fit_sigmaCB->GetParameter(1) << "*@0)+(" << fit_sigmaCB->GetParameter(2) << "*@0*@0)+(" << fit_sigmaCB->GetParameter(3) << "*@0*@0*@0)+(" << fit_sigmaCB->GetParameter(4) << "*@0*@0*@0*@0)+(" << fit_sigmaCB->GetParameter(5) << "*@0*@0*@0*@0*@0)" << endl;
     ofsCard << endl;
 
   }
