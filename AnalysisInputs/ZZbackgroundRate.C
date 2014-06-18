@@ -157,6 +157,3 @@ double sumWeights(TString name, double lumi, int selVBF){
 
   return totEvents*lumi;
 }
-
-
-
