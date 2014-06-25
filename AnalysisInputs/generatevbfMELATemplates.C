@@ -326,16 +326,30 @@ void buildChain(TChain* bkgMC, int sampleIndex){
     bkgMC->Add(filePath8TeV + "4e/HZZ4lTree_ZZJetsTo4L.root");
     bkgMC->Add(filePath8TeV + "2mu2e/HZZ4lTree_ZZJetsTo4L.root");
   }
-  else if(sampleIndex==8){ //Will be updated if there is a final combination of all CJLST samples
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo4eJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo4muJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo4eJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo4muJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo4eJJ_Contin.root");
-    bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo4muJJ_Contin.root");
+  else if(sampleIndex==8){
+    if(useSqrts<2){
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/2mu2e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/2mu2e/HZZ4lTree_ZZTo4eJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/2mu2e/HZZ4lTree_ZZTo4muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/4e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/4e/HZZ4lTree_ZZTo4eJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/4e/HZZ4lTree_ZZTo4muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/4mu/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/4mu/HZZ4lTree_ZZTo4eJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR/4mu/HZZ4lTree_ZZTo4muJJ_Contin.root");
+
+    }
+    if(useSqrts%2==0){
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo4eJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/2mu2e/HZZ4lTree_ZZTo4muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo4eJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4e/HZZ4lTree_ZZTo4muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo4eJJ_Contin.root");
+      bkgMC->Add("/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/4mu/HZZ4lTree_ZZTo4muJJ_Contin.root");
+    }
   }   
 }
 

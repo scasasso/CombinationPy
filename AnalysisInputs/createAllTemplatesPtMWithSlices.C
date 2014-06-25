@@ -1,4 +1,4 @@
-void createAllTemplatesPtMWithSlices(TString channel = "all", TString type = "0")
+void createAllTemplatesPtMWithSlices(TString channel = "2mu2e", TString type = "0")
 {
   gROOT->ProcessLine(".L makeTemplatesPtSyst.C+");  
 

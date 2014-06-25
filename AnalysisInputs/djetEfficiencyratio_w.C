@@ -50,7 +50,9 @@ using namespace ROOT::Math;
 //<----------
 
 enum Channel {fs4mu=1, fs4e=2, fs2e2mu=3};
-enum Process {ggH=1, qqH=2, ZH=3, WH=4, ttH=5, ggZZ=6, qqZZ=7, MCFM=8, gg2VV=9};
+enum Process {ggH=1, qqH=2, ZH=3, WH=4, ttH=5, ggZZ=6, qqZZ=7, VBFZZ=8, MCFM=9, gg2VV=10, ZX=11, PSig=12, PInt=13};
+
+bool test_bit( int mask, unsigned int iBit ) { return (mask >> iBit) & 1; }
 
 TFile* ftot,*fratio;
 
@@ -116,7 +118,7 @@ void djetEfficiencyratio_w() {
   fileOutYields << "Lumi 8 TeV: " << lumi8TeV << endl << endl;
 
   //ggH
-  djetEfficiencyratio_w(fs4mu,  7,ggH,JES,&fileOutYields);
+  /*djetEfficiencyratio_w(fs4mu,  7,ggH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   7,ggH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs2e2mu,7,ggH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4mu,  8,ggH,JES,&fileOutYields);
@@ -126,12 +128,12 @@ void djetEfficiencyratio_w() {
   //qqH
   djetEfficiencyratio_w(fs4mu,  7,qqH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   7,qqH,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs2e2mu,7,qqH,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs4mu,  8,qqH,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs4e,   8,qqH,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs2e2mu,8,qqH,JES,&fileOutYields);
-
+  djetEfficiencyratio_w(fs2e2mu,7,qqH,JES,&fileOutYields);*/
+  //djetEfficiencyratio_w(fs4mu,  8,qqH,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs4e,   8,qqH,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs2e2mu,8,qqH,JES,&fileOutYields);
   /*
+  
   //ZH
   djetEfficiencyratio_w(fs4mu,  7,ZH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   7,ZH,JES,&fileOutYields);
@@ -154,11 +156,11 @@ void djetEfficiencyratio_w() {
   djetEfficiencyratio_w(fs2e2mu,7,ttH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4mu,  8,ttH,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   8,ttH,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs2e2mu,8,ttH,JES,&fileOutYields);*/
+  djetEfficiencyratio_w(fs2e2mu,8,ttH,JES,&fileOutYields);
 
   //ggZZ
   djetEfficiencyratio_w(fs4mu,  7,ggZZ,JES,&fileOutYields);
-  /*djetEfficiencyratio_w(fs4e,   7,ggZZ,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   7,ggZZ,JES,&fileOutYields);
   djetEfficiencyratio_w(fs2e2mu,7,ggZZ,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4mu,  8,ggZZ,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   8,ggZZ,JES,&fileOutYields);
@@ -172,21 +174,53 @@ void djetEfficiencyratio_w() {
   djetEfficiencyratio_w(fs4e,   8,qqZZ,JES,&fileOutYields);
   djetEfficiencyratio_w(fs2e2mu,8,qqZZ,JES,&fileOutYields);*/
 
+  //VBFZZ
+  //djetEfficiencyratio_w(fs4mu,  7,VBFZZ,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs4e,   7,VBFZZ,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs2e2mu,7,VBFZZ,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs4mu,  8,VBFZZ,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs4e,   8,VBFZZ,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs2e2mu,8,VBFZZ,JES,&fileOutYields);
+
   //MCFM
-  djetEfficiencyratio_w(fs4mu,  7,MCFM,JES,&fileOutYields);
-  /*djetEfficiencyratio_w(fs4e,   7,MCFM,JES,&fileOutYields);
+  /*djetEfficiencyratio_w(fs4mu,  7,MCFM,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   7,MCFM,JES,&fileOutYields);
   djetEfficiencyratio_w(fs2e2mu,7,MCFM,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4mu,  8,MCFM,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   8,MCFM,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs2e2mu,8,MCFM,JES,&fileOutYields);*/
+  djetEfficiencyratio_w(fs2e2mu,8,MCFM,JES,&fileOutYields);
 
   //gg2VV
   djetEfficiencyratio_w(fs4mu,  7,gg2VV,JES,&fileOutYields);
-  /*djetEfficiencyratio_w(fs4e,   7,gg2VV,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   7,gg2VV,JES,&fileOutYields);
   djetEfficiencyratio_w(fs2e2mu,7,gg2VV,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4mu,  8,gg2VV,JES,&fileOutYields);
   djetEfficiencyratio_w(fs4e,   8,gg2VV,JES,&fileOutYields);
-  djetEfficiencyratio_w(fs2e2mu,8,gg2VV,JES,&fileOutYields);*/
+  djetEfficiencyratio_w(fs2e2mu,8,gg2VV,JES,&fileOutYields);
+
+  //Z+X
+  djetEfficiencyratio_w(fs4mu,  7,ZX,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   7,ZX,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs2e2mu,7,ZX,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4mu,  8,ZX,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   8,ZX,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs2e2mu,8,ZX,JES,&fileOutYields);*/  
+
+  //Phantom Sig
+  //djetEfficiencyratio_w(fs4mu,  7,PSig,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs4e,   7,PSig,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs2e2mu,7,PSig,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4mu,  8,PSig,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   8,PSig,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs2e2mu,8,PSig,JES,&fileOutYields);
+
+  //Phantom Int
+  //djetEfficiencyratio_w(fs4mu,  7,PInt,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs4e,   7,PInt,JES,&fileOutYields);
+  //djetEfficiencyratio_w(fs2e2mu,7,PInt,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4mu,  8,PInt,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs4e,   8,PInt,JES,&fileOutYields);
+  djetEfficiencyratio_w(fs2e2mu,8,PInt,JES,&fileOutYields);
 
   fileOutYields.close();
   
@@ -211,9 +245,13 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
   else if (process == WH) sprocess = "WH";
   else if (process == ttH) sprocess = "ttH";
   else if (process == ggZZ) sprocess = "ggZZ";
-  else if (process == qqZZ) sprocess = "qqZZ";  
+  else if (process == qqZZ) sprocess = "qqZZ"; 
+  else if (process == VBFZZ) sprocess = "VBFZZ"; 
   else if (process == MCFM) sprocess = "MCFM";
   else if (process == gg2VV) sprocess = "gg2VV";
+  else if (process == ZX) sprocess = "ZX";
+  else if (process == PSig) sprocess = "PhantomSig";
+  else if (process == PInt) sprocess = "PhantomInt";
   else cout << "Not a valid channel: " << process << endl;  
 
   TString sjes;
@@ -276,6 +314,8 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
   int nPoints=0;
   int* masses=0;
   double* mHVal=0;
+  int phantommasses[21]={180,190,200,225,250,275,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000};
+  double phantomHmasses[21]={180,190,200,225,250,275,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000};
 
   // Pick the correct set of mass points, set subpath
   TString filepath;
@@ -343,19 +383,30 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
       mHVal   = mHVHVal8TeV;
       filepath = filePath8TeV;
     }
-  } else if (process==qqZZ || process==ggZZ || process==MCFM || process==gg2VV){
+  } else if (process==qqZZ || process==ggZZ || process==VBFZZ || process==MCFM || process==gg2VV || process==ZX){
     if(sqrts==7){
       nPoints = nVBFPoints7TeV;
       masses  = VBFmasses7TeV;
       mHVal   = mHVBFVal7TeV;
       filepath = filePath7TeV;
+      if(process == VBFZZ) filepath = "/scratch0/hep/ianderso/CJLST/140604/PRODFSR/";
     } else if(sqrts==8){
       nPoints = nVBFPoints8TeV;
       masses  = VBFmasses8TeV;
       mHVal   = mHVBFVal8TeV;
       filepath = filePath8TeV;
+      if(process == VBFZZ) filepath = "/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/";
     }
-  } 
+  } else if(process==PSig || process==PInt){
+    if(sqrts==7){
+      assert(0);
+    } else if(sqrts==8){
+      nPoints = 21;
+      masses = phantommasses;
+      mHVal = phantomHmasses;
+      filepath = "/scratch0/hep/ianderso/CJLST/140604/PRODFSR_8TeV/";
+    }
+  }
 
 
   float xMax = masses[nPoints-1]+10;
@@ -398,7 +449,7 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
     else if (process==ZH)  xsTimesBR = BR*myCSW->HiggsCS(3,masses[i],sqrts);
     else if (process==WH)  xsTimesBR = BR*myCSW->HiggsCS(4,masses[i],sqrts);
     else if (process==ttH) xsTimesBR = BR*myCSW->HiggsCS(5,masses[i],sqrts);
-    else if (process==ggZZ || process==qqZZ || process==MCFM || process==gg2VV) xsTimesBR = 1; 
+    else if (process==ggZZ || process==qqZZ || process==MCFM || process==gg2VV || process==VBFZZ || process==PSig || process==PInt) xsTimesBR = 1; 
 
 
     if (process==ggH) {
@@ -423,6 +474,8 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
     /*TFile *f = TFile::Open(infile) ;
     TTree *t1 = (TTree*) f->Get("SelectedTree");*/
     TChain* t1 = new TChain("SelectedTree");
+    TChain* t2 = new TChain("SelectedTree");
+    TChain* t3 = new TChain("SelectedTree");
     if(process==ggZZ){
       t1->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ggZZ2l2l.root");
       t1->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ggZZ4l.root");
@@ -440,7 +493,28 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
     } else if(process==gg2VV){
       t1->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ggTo2l2l_Continuum.root");
       t1->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ggTo4l_Continuum.root");
-    } else t1->Add(infile);
+    } else if(process==ZX){
+      t1->Add(filepath+"/CR/HZZ4lTree_DoubleOr_CRZLLTree.root");
+    } else if(process==VBFZZ || process==PSig || process==PInt){
+      if(sqrts==8) t1->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo2e2muJJ_Contin.root");
+      t1->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4muJJ_Contin.root");
+      t1->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4eJJ_Contin.root");
+      if(process==PSig || process==PInt){
+        t2->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo2e2muJJ_BSM10HContinInterf_H125.6.root");
+        t2->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4muJJ_BSM10HContinInterf_H125.6.root");
+        t2->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4eJJ_BSM10HContinInterf_H125.6.root");
+        if(channel!=3){
+          t3->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo2e2muJJ_BSM25HContinInterf_H125.6.root");
+          t3->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4muJJ_BSM25HContinInterf_H125.6.root");
+          t3->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4eJJ_BSM25HContinInterf_H125.6.root");
+        }else{
+          t3->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo2e2muJJ_SMHContinInterf_H125.6.root");
+          //t3->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4muJJ_SMHContinInterf_H125.6.root");
+          t3->Add(filepath+"/"+schannelFilename+"/HZZ4lTree_ZZTo4eJJ_SMHContinInterf_H125.6.root");          
+        }
+      }
+    }
+    else t1->Add(infile);
     float MC_weight_norm, MC_weight_PUWeight, MC_weight_powhegWeight,  MC_weight_dataMC;
     float MC_weight_noxsec;
     float GenHPt;
@@ -450,21 +524,75 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
     vector<double> *JetPt=0;
     vector<double> *JetSigma=0;
     float ZZMass;
-    float phjj, pvbf;
+    float phjj, pvbf, mJJ;
+    int CRflag;
     t1->SetBranchAddress("MC_weight",&MC_weight_norm); // For efficiency vs "proper" final state <- NOTE THIS IS NOT SET IN 140211
     t1->SetBranchAddress("MC_weight_noxsec",&MC_weight_noxsec); // For efficiency vs all gen events
     t1->SetBranchAddress("MC_weight_powhegWeight",&MC_weight_powhegWeight);
     t1->SetBranchAddress("MC_weight_PUWeight",&MC_weight_PUWeight);
     t1->SetBranchAddress("MC_weight_dataMC",&MC_weight_dataMC);
-    //t1->SetBranchAddress("NJets",&NJets);
     t1->SetBranchAddress("genProcessId",&genProcessId);
     t1->SetBranchAddress("JetPt",&JetPt);
     t1->SetBranchAddress("JetSigma",&JetSigma);
-    t1->SetBranchAddress("phjj_VAJHU_old",&phjj);
-    t1->SetBranchAddress("pvbf_VAJHU_old",&pvbf);
+    t1->SetBranchAddress("DiJetMass",&mJJ);
+    if(process==PSig || process==PInt){
+      t2->SetBranchAddress("MC_weight",&MC_weight_norm); // For efficiency vs "proper" final state <- NOTE THIS IS NOT SET IN 140211
+      t2->SetBranchAddress("MC_weight_noxsec",&MC_weight_noxsec); // For efficiency vs all gen events
+      t2->SetBranchAddress("MC_weight_powhegWeight",&MC_weight_powhegWeight);
+      t2->SetBranchAddress("MC_weight_PUWeight",&MC_weight_PUWeight);
+      t2->SetBranchAddress("MC_weight_dataMC",&MC_weight_dataMC);
+      t2->SetBranchAddress("genProcessId",&genProcessId);
+      t2->SetBranchAddress("JetPt",&JetPt);
+      t2->SetBranchAddress("JetSigma",&JetSigma);
+      t2->SetBranchAddress("DiJetMass",&mJJ);
+      t3->SetBranchAddress("MC_weight",&MC_weight_norm); // For efficiency vs "proper" final state <- NOTE THIS IS NOT SET IN 140211
+      t3->SetBranchAddress("MC_weight_noxsec",&MC_weight_noxsec); // For efficiency vs all gen events
+      t3->SetBranchAddress("MC_weight_powhegWeight",&MC_weight_powhegWeight);
+      t3->SetBranchAddress("MC_weight_PUWeight",&MC_weight_PUWeight);
+      t3->SetBranchAddress("MC_weight_dataMC",&MC_weight_dataMC);
+      t3->SetBranchAddress("genProcessId",&genProcessId);
+      t3->SetBranchAddress("JetPt",&JetPt);
+      t3->SetBranchAddress("JetSigma",&JetSigma);
+      t3->SetBranchAddress("DiJetMass",&mJJ);
+    }
+    if(JES==0){
+      t1->SetBranchAddress("phjj_VAJHU_old",&phjj);
+      t1->SetBranchAddress("pvbf_VAJHU_old",&pvbf);
+      if(process==PSig || process==PInt){
+        t2->SetBranchAddress("phjj_VAJHU_old",&phjj);
+        t2->SetBranchAddress("pvbf_VAJHU_old",&pvbf);
+        t3->SetBranchAddress("phjj_VAJHU_old",&phjj);
+        t3->SetBranchAddress("pvbf_VAJHU_old",&pvbf);
+      }
+    } else if(JES==1){
+      t1->SetBranchAddress("phjj_VAJHU_old_up",&phjj);
+      t1->SetBranchAddress("pvbf_VAJHU_old_up",&pvbf);
+      if(process==PSig || process==PInt){
+        t2->SetBranchAddress("phjj_VAJHU_old_up",&phjj);
+        t2->SetBranchAddress("pvbf_VAJHU_old_up",&pvbf);      
+        t3->SetBranchAddress("phjj_VAJHU_old_up",&phjj);
+        t3->SetBranchAddress("pvbf_VAJHU_old_up",&pvbf);
+      }      
+    } else if(JES==-1){
+      t1->SetBranchAddress("phjj_VAJHU_old_dn",&phjj);
+      t1->SetBranchAddress("pvbf_VAJHU_old_dn",&pvbf);
+      if(process==PSig || process==PInt){            
+        t2->SetBranchAddress("phjj_VAJHU_old_dn",&phjj);
+        t2->SetBranchAddress("pvbf_VAJHU_old_dn",&pvbf);            
+        t3->SetBranchAddress("phjj_VAJHU_old_dn",&phjj);
+        t3->SetBranchAddress("pvbf_VAJHU_old_dn",&pvbf);           
+      } 
+    }
     //    t1->SetBranchAddress("NJets30",&NJets30);
     t1->SetBranchAddress("GenHPt",&GenHPt);
     t1->SetBranchAddress("ZZMass",&ZZMass);
+    if(process==PSig || process==PInt){
+      t2->SetBranchAddress("GenHPt",&GenHPt);
+      t2->SetBranchAddress("ZZMass",&ZZMass);
+      t3->SetBranchAddress("GenHPt",&GenHPt);
+      t3->SetBranchAddress("ZZMass",&ZZMass);
+    }
+    if(process==ZX) t1->SetBranchAddress("CRflag",&CRflag);
 
     //Initialize counters for non-dijet events
     Counts* untagInMW = new Counts(); Counts* untagAll = new Counts();
@@ -494,10 +622,10 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
       lowside = 350.0;
       highside = 1400.0;
     }
-    if(process!=ggZZ && process!=qqZZ){
+    if(process!=ggZZ && process!=qqZZ && process!=VBFZZ && process!=MCFM && process!=gg2VV && process!=ZX && process!=PSig && process!=PInt){
       low_M = max( (masses[i] - 20.*windowVal), lowside);
       high_M = min((masses[i] + 15.*windowVal), highside);
-    } else if(process==ggZZ || process==qqZZ || process==MCFM || process==gg2VV) {
+    } else if(process==ggZZ || process==qqZZ || process==VBFZZ || process==MCFM || process==gg2VV || process==ZX || process==PSig || process==PInt) {
       if(i!=0 && i!=nPoints-1){
         low_M = masses[i]-(masses[i]-masses[i-1])/2;
         high_M = masses[i+1]-(masses[i+1]-masses[i])/2;        
@@ -529,7 +657,11 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
       t1->GetEntry(a);
       // Skip VH events that do not belong to the right gen prod mechanism. This is no longer necessary with the proper VH samples
       if ((process==ZH && genProcessId!=24) || (process==WH && genProcessId!=26) || (process==ttH && (genProcessId!=121 && genProcessId!=122))) continue; 
-
+      if (process==ZX){
+        if (channel!=1 && test_bit(CRflag,5)) continue;
+        if (channel!=2 && test_bit(CRflag,7)) continue;
+        if (channel!=3 && (test_bit(CRflag,9) || test_bit(CRflag,11))) continue;
+      }
 
       // We use the efficiency vs. generated events in the proper FS for ggH, VBF, and the efficiency vs all generated events for VH, ttH
       float effw = MC_weight_norm;
@@ -543,30 +675,133 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
       	effw = MC_weight_noxsec*filter_eff_ttH_8TeV;
       }      
 
-//       double HPtWeight = 1.;
-//       if (process==ggH) HPtWeight = h_HPtWeight->GetBinContent(h_HPtWeight->FindBin(GenHPt));
-//       //cout << "Higgs pT weight = " << HPtWeight << endl;
-//       effw*=HPtWeight;
+      //       double HPtWeight = 1.;
+      //       if (process==ggH) HPtWeight = h_HPtWeight->GetBinContent(h_HPtWeight->FindBin(GenHPt));
+      //       //cout << "Higgs pT weight = " << HPtWeight << endl;
+      //       effw*=HPtWeight;
       
 
       int NJets=0;
       double jetptc=0;
       float Djet=0;
-      for (unsigned int j=0; j<JetPt->size();j++){
-      	if (JES==0.) jetptc=JetPt->at(j);
-      	else if (JES!=0.) jetptc=JetPt->at(j)*(1+JES*JetSigma->at(j));
-      	if (jetptc>30.) NJets++;
+      if(process!=ZX){
+        for (unsigned int j=0; j<JetPt->size();j++){
+        	if (JES==0.) jetptc=JetPt->at(j);
+        	else if (JES!=0.) jetptc=JetPt->at(j)*(1+JES*JetSigma->at(j));
+        	if (jetptc>30.) NJets++;
+        }
         if(NJets>1) Djet=pvbf/(phjj+pvbf);
       }
+      if(process==ZX && (phjj!=-1. && pvbf!=-1.)){
+        NJets=2;
+        Djet=pvbf/(phjj+pvbf);
+      }
 
+      float scalebkg;
+      if(process!=PSig && process!=PInt){
+        scalebkg=1.;
+      } else if(process==PSig){
+        if(channel!=3) scalebkg=(-5.+sqrt(10))/(50-25*sqrt(10));
+        else if(channel==3) scalebkg=(1-sqrt(10))/(-10+sqrt(10));
+      } else if(process==PInt){
+        if(channel!=3) scalebkg=(15.)/(50-25*sqrt(10));          
+        else if(channel==3) scalebkg=(9)/(-10+sqrt(10));
+      }
+      effw*=scalebkg;
+      MC_weight_PUWeight*=scalebkg;
+      MC_weight_powhegWeight*=scalebkg;
+      MC_weight_dataMC*=scalebkg;
       // Untagged
       if (NJets<2 || (useDjet==true && Djet<0.5)){
-      	untagAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
-      	if ( (ZZMass>low_M && ZZMass<high_M) ) untagInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        untagAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        if ( (ZZMass>low_M && ZZMass<high_M) ) untagInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
       }
       else{ // Dijet
       	dijetAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
-      	if ( (ZZMass>low_M && ZZMass<high_M) ) dijetInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+      	if ( (ZZMass>low_M && ZZMass<high_M) ){
+          if(mJJ<130. && (process==PSig || process==PInt)) cout<<"Warning: Continuum event w/ mJJ<130. mJJ="<<mJJ<<endl;
+          dijetInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        }
+      }
+    }
+    if(process==PSig || process==PInt){
+      for (int a = 0; a < t2->GetEntries(); a++){ 
+        t2->GetEntry(a);
+        float effw = MC_weight_norm;
+        int NJets=0;
+        double jetptc=0;
+        float Djet=0;
+        for (unsigned int j=0; j<JetPt->size();j++){
+          if (JES==0.) jetptc=JetPt->at(j);
+          else if (JES!=0.) jetptc=JetPt->at(j)*(1+JES*JetSigma->at(j));
+          if (jetptc>30.) NJets++;
+          if(NJets>1) Djet=pvbf/(phjj+pvbf);
+        }
+        float scalebsm10;
+        if(process!=PSig && process!=PInt){
+          scalebsm10=1.;
+        } else if(process==PSig){
+          if(channel!=3) scalebsm10=(5.)/(50-25*sqrt(10));
+          else if(channel==3) scalebsm10=(sqrt(10))/(-10+sqrt(10));
+        } else if(process==PInt){
+          if(channel!=3) scalebsm10=(-25.)/(50-25*sqrt(10));
+          else if(channel==3) scalebsm10=(-10.)/(-10+sqrt(10));
+        }
+        effw*=scalebsm10;
+        MC_weight_PUWeight*=scalebsm10;
+        MC_weight_powhegWeight*=scalebsm10;
+        MC_weight_dataMC*=scalebsm10;
+        // Untagged
+        if (NJets<2 || (useDjet==true && Djet<0.5)){
+          untagAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+          if ( (ZZMass>low_M && ZZMass<high_M) ) untagInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        }
+        else{ // Dijet
+          dijetAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+          if ( (ZZMass>low_M && ZZMass<high_M) ){
+            if(mJJ<130. && (process==PSig || process==PInt)) cout<<"Warning: BSM10 event w/ mJJ<130. mJJ="<<mJJ<<endl;
+            dijetInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+          }
+        }
+      }
+      for (int a = 0; a < t3->GetEntries(); a++){ 
+        t3->GetEntry(a);
+        float effw = MC_weight_norm;
+        int NJets=0;
+        double jetptc=0;
+        float Djet=0;
+        for (unsigned int j=0; j<JetPt->size();j++){
+          if (JES==0.) jetptc=JetPt->at(j);
+          else if (JES!=0.) jetptc=JetPt->at(j)*(1+JES*JetSigma->at(j));
+          if (jetptc>30.) NJets++;
+          if(NJets>1) Djet=pvbf/(phjj+pvbf);
+        }
+        float scalebsm25;
+        if(process!=PSig && process!=PInt){
+          scalebsm25=1.;
+        } else if(process==PSig){
+          if(channel!=3) scalebsm25=(-sqrt(10))/(50-25*sqrt(10));
+          else if(channel==3) scalebsm25=(-1.)/(-10+sqrt(10));
+        } else if(process==PInt){
+          if(channel!=3) scalebsm25=(10.)/(50-25*sqrt(10));   
+          else if(channel==3) scalebsm25=(1.)/(-10+sqrt(10));       
+        }
+        effw*=scalebsm25;
+        MC_weight_PUWeight*=scalebsm25;
+        MC_weight_powhegWeight*=scalebsm25;
+        MC_weight_dataMC*=scalebsm25;
+        // Untagged
+        if (NJets<2 || (useDjet==true && Djet<0.5)){
+          untagAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+          if ( (ZZMass>low_M && ZZMass<high_M) ) untagInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+        }
+        else{ // Dijet
+          dijetAll->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+          if ( (ZZMass>low_M && ZZMass<high_M) ){
+            if(mJJ<130. && (process==PSig || process==PInt)) cout<<"Warning: BSM25 event w/ mJJ<130. mJJ="<<mJJ<<endl;
+            dijetInMW->incrCounters(effw, MC_weight_PUWeight, MC_weight_powhegWeight, MC_weight_dataMC);
+          }
+        }
       }
     }
 
@@ -675,7 +910,11 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
     ratgrEff = new TGraphErrors( nPoints, mHVal, dijetratioValInMW, 0, dijetratioErrInMW);
   }
   totgrEff->SetMarkerStyle(20);
-  ratgrEff->SetMarkerStyle(20);
+  if(process!=qqH) ratgrEff->SetMarkerStyle(20);
+  if(process==qqH) ratgrEff->SetMarkerStyle(21);
+  if(process==qqH || process==PSig) ratgrEff->SetMarkerColor(kBlue);
+  if(process==VBFZZ) ratgrEff->SetMarkerColor(kRed);
+  if(process==PInt) ratgrEff->SetMarkerColor(kMagenta);
 
   //ICHEP parametrization	
   //TF1 *polyFunc= new TF1("polyFunc","([0]+[1]*TMath::Erf( (x-[2])/[3] ))*([4]+[5]*x+[6]*x*x)", 110., xMax);
@@ -776,19 +1015,19 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
   //if(useGGHMINLO && useNewVBFPowheg) outname+="_140211";
   if(useDjet) outname+="_Djet";
 
-  TF1 *ratiofit=0;
-  if (process==ggH || process==qqH || process==ggZZ || process==qqZZ || process==MCFM || process==gg2VV) ratiofit = new TF1("ratiofit","([0]+[1]*x+[2]*x*x)",110.,xMax);
-  if (process==ZH || process==WH || process==ttH) ratiofit = new TF1("ratiofit","([0]+[1]*x)",110.,xMax);
-  if (process==ggH) ratiofit->SetLineColor(kRed);
-  else if (process==qqH) ratiofit->SetLineColor(kBlue);
+  /*TF1 *ratiofit=0;
+  if (process==ggH || process==qqH || process==ggZZ || process==qqZZ || process==MCFM || process==gg2VV || process==VBFZZ || process==PSig || process==PInt) ratiofit = new TF1("ratiofit","([0]+[1]*x+[2]*x*x)",110.,xMax);
+  if (process==ZH || process==WH || process==ttH || process==ZX) ratiofit = new TF1("ratiofit","([0]+[1]*x)",110.,xMax);
+  if (process==ggH || process==VBFZZ) ratiofit->SetLineColor(kRed);
+  else if (process==qqH || process==PSig) ratiofit->SetLineColor(kBlue);
   else if (process==ggZZ || process==gg2VV  || process==MCFM) ratiofit->SetLineColor(kGreen+2);
-  else if (process==qqZZ) ratiofit->SetLineColor(kMagenta);
+  else if (process==qqZZ || process==PInt) ratiofit->SetLineColor(kMagenta);
   else ratiofit->SetLineColor(kBlack);
 
-  if(process==MCFM) ratiofit->SetLineStyle(2);
+  if(process==MCFM || process==qqH) ratiofit->SetLineStyle(2);
   if(process==gg2VV) ratiofit->SetLineStyle(9);
 
-  ratgrEff->Fit(ratiofit,"Rt");
+  ratgrEff->Fit(ratiofit,"Rt");*/
   ratgrEff->GetXaxis()->SetTitle(xaxisText);
   TString yaxisratio = "Dijet ratio, " + sprocess + ", " + schannel;
   ratgrEff->GetYaxis()->SetTitle(yaxisratio);
@@ -800,15 +1039,16 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
   crat->Print(outname+".pdf");
   //crat->Print(outname+".root");
   fratio->cd();
+  //ratiofit->Write("fit");
   ratgrEff->Write("Ratio");
   fratio->Close();
   
-  cout << endl;
+  /*cout << endl;
   cout << "------- Parameters for " << sprocess << " " << schannel << " sqrts=" << sqrts << endl;
   cout << "   a1 = " << ratiofit->GetParameter(0) << endl;
   cout << "   a2 = " << ratiofit->GetParameter(1) << endl;
   if (process==ggH || process==qqH) cout << "   a3 = " << ratiofit->GetParameter(2) << endl;
-  cout << "---------------------------" << endl << endl;
+  cout << "---------------------------" << endl << endl;*/
 
   /*
   if (process==ggH) {
@@ -837,6 +1077,6 @@ void djetEfficiencyratio_w(int channel, double sqrts, int process, double JES, o
   delete fitJys;
   delete myCSW;
   delete polyFunctot;
-  delete ratiofit;
+  //delete ratiofit;
 }
 
