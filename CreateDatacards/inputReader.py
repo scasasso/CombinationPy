@@ -770,18 +770,6 @@ class inputReader:
             if f[0].lower().startswith("usecms_zz4l_pt_sys"):
                 self.useCMS_zz4l_Pt_sys = self.parseBoolString(f[1])
                 
-        fInHistoTheoParsGGH = TFile("ParamsGrid_SigInt_"+str(int(self.sqrts))+"TeV.root")
-        self.h_r_theoParGGH = fInHistoTheoParsGGH.Get("h_r")
-        self.h_r_theoParGGH.SetDirectory(0)
-        self.h_Gamma_theoParGGH = fInHistoTheoParsGGH.Get("h_Gamma")
-        self.h_Gamma_theoParGGH.SetDirectory(0)
-        self.h_Alpha_theoParGGH = fInHistoTheoParsGGH.Get("h_Alpha")
-        self.h_Alpha_theoParGGH.SetDirectory(0)
-        self.h_Beta_theoParGGH = fInHistoTheoParsGGH.Get("h_Beta")
-        self.h_Beta_theoParGGH.SetDirectory(0)
-        self.h_Delta_theoParGGH = fInHistoTheoParsGGH.Get("h_Delta")
-        self.h_Delta_theoParGGH.SetDirectory(0)
-        fInHistoTheoParsGGH.Close()
 
     def getInputs(self):
 
@@ -1288,11 +1276,5 @@ class inputReader:
 	dict['relerr_zx_ld_sigma'] = self.relerr_zx_ld_sigma
 	dict['relerr_zx_gs_mean'] = self.relerr_zx_gs_mean
 	dict['relerr_zx_gs_sigma'] = self.relerr_zx_gs_sigma
-
-        dict['h_r_theoParGGH'] = self.h_r_theoParGGH
-        dict['h_Gamma_theoParGGH'] = self.h_Gamma_theoParGGH
-        dict['h_Alpha_theoParGGH'] = self.h_Alpha_theoParGGH
-        dict['h_Beta_theoParGGH'] = self.h_Beta_theoParGGH
-        dict['h_Delta_theoParGGH'] = self.h_Delta_theoParGGH
 
         return dict
