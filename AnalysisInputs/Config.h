@@ -80,9 +80,9 @@ TString filePath8TeV = "root://lxcms02//data/Higgs/rootuplesOut/130720d/PRODFSR_
 /* TString filePath7TeV = "root://lxcms00//data3/2014/HZZ_stat/140519/PRODFSR/"; */
 /* TString filePath8TeV = "root://lxcms00//data3/2014/HZZ_stat/140519/PRODFSR_8TeV/"; */
 
-//Local copy
-TString filePath7TeV = "/scratch0/hep/ianderso/CJLST/140519/PRODFSR/";
-TString filePath8TeV = "/scratch0/hep/ianderso/CJLST/140519/PRODFSR_8TeV/"; 
+/* //Local copy */
+/* TString filePath7TeV = "/scratch0/hep/ianderso/CJLST/140519/PRODFSR/"; */
+/* TString filePath8TeV = "/scratch0/hep/ianderso/CJLST/140519/PRODFSR_8TeV/";  */
 
  //TString filePath7TeV = "";
 TString filePath7TeV_Phantom = "root://lxcms00//data3/2014/HZZ_stat/140604/PRODFSR/";
