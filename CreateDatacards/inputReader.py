@@ -342,7 +342,7 @@ class inputReader:
                     elif chan.lower().startswith("tth"):   self.ttH_chan = True
                     elif chan.lower().startswith("qqzz"):  self.qqZZ_chan = True
                     elif chan.lower().startswith("ggzz"):  self.ggZZ_chan = True
-                    elif chan.lower().startswith("vbfzz"):  self.vbfggZZ_chan = True
+                    elif chan.lower().startswith("vbfzz"):  self.VBFZZ_chan = True
                     elif chan.lower().startswith("zjets"): self.zjets_chan = True
                     elif chan.lower().startswith("ttbar"): self.ttbar_chan = True
                     elif chan.lower().startswith("zbb"):   self.zbb_chan = True
@@ -360,7 +360,7 @@ class inputReader:
                     if len(f) == 4: self.ggZZ_lumi = float(f[3])
                 if f[1].lower().startswith("vbfzz"):
                     self.VBFZZ_rate = float(f[2])
-                    if len(f) == 4: self.ggZZ_lumi = float(f[3])                    
+                    if len(f) == 4: self.VBFZZ_lumi = float(f[3])                    
                 if f[1].lower().startswith("zjets"):
                     self.zjets_rate = float(f[2])
                     if len(f) == 4: self.zjets_lumi = float(f[3])
